@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" role="img" aria-labelledby="title">
+  <title id="title">Elite PC</title>
+  <g fill="none" stroke="#008fa3" stroke-width="2"><rect x="8" y="8" width="32" height="32" rx="4"/><rect x="15" y="15" width="18" height="18" rx="2"/><path d="M18 3v5m8-5v5m8-5v5M18 40v5m8-5v5m8-5v5M3 18h5m-5 8h5m-5 8h5m32-16h5m-5 8h5m-5 8h5"/></g>
+  <path fill="#008fa3" d="M20 20h8v8h-8z"/>
+  <text x="57" y="33" fill="#101820" font-family="Arial,sans-serif" font-size="27" font-weight="800" letter-spacing="-1">ELITE</text>
+  <text x="137" y="33" fill="#008fa3" font-family="Arial,sans-serif" font-size="27" font-weight="800" letter-spacing="-1">PC</text>
+</svg>
