@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Produit;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * GeminiRagService — Retrieval-Augmented Generation for the Elite PC AI chat.
@@ -24,7 +25,7 @@ class GeminiRagService
      * Each product entry includes: name, price, stock status, brand,
      * processor, GPU, RAM, storage, custom-build flag, and category.
      *
-     * @return string  Formatted catalog text ready for prompt injection.
+     * @return string Formatted catalog text ready for prompt injection.
      */
     public function buildProductCatalogContext(): string
     {
@@ -40,7 +41,8 @@ class GeminiRagService
 
         if ($products->isEmpty()) {
             Log::warning('GeminiRagService: Product catalog is empty — AI will have no product data.');
-            return "No products are currently available in the store catalog.";
+
+            return 'No products are currently available in the store catalog.';
         }
 
         // Build a human-readable, structured text block for each product
@@ -48,8 +50,8 @@ class GeminiRagService
 
         foreach ($products as $product) {
             $entry = "- **{$product->nom}**";
-            $entry .= " | Price: " . number_format($product->prix, 2) . " DA";
-            $entry .= " | Stock: " . ($product->stock > 0 ? "{$product->stock} units available" : "OUT OF STOCK");
+            $entry .= ' | Price: $'.number_format($product->prix, 2);
+            $entry .= ' | Stock: '.($product->stock > 0 ? "{$product->stock} units available" : 'OUT OF STOCK');
 
             // Category name (if relationship loaded)
             if ($product->categorie) {
@@ -58,20 +60,32 @@ class GeminiRagService
 
             // Hardware specifications (only include non-null fields)
             $specs = [];
-            if ($product->brand)           $specs[] = "Brand: {$product->brand}";
-            if ($product->processor)       $specs[] = "Processor: {$product->processor}";
-            if ($product->graphics_card)   $specs[] = "GPU: {$product->graphics_card}";
-            if ($product->ram_details)     $specs[] = "RAM: {$product->ram_details}";
-            if ($product->storage_details) $specs[] = "Storage: {$product->storage_details}";
-            if ($product->is_custom_build) $specs[] = "Type: Custom Build";
+            if ($product->brand) {
+                $specs[] = "Brand: {$product->brand}";
+            }
+            if ($product->processor) {
+                $specs[] = "Processor: {$product->processor}";
+            }
+            if ($product->graphics_card) {
+                $specs[] = "GPU: {$product->graphics_card}";
+            }
+            if ($product->ram_details) {
+                $specs[] = "RAM: {$product->ram_details}";
+            }
+            if ($product->storage_details) {
+                $specs[] = "Storage: {$product->storage_details}";
+            }
+            if ($product->is_custom_build) {
+                $specs[] = 'Type: Custom Build';
+            }
 
-            if (!empty($specs)) {
-                $entry .= " | Specs: " . implode(', ', $specs);
+            if (! empty($specs)) {
+                $entry .= ' | Specs: '.implode(', ', $specs);
             }
 
             // Short description (truncated to avoid prompt bloat)
             if ($product->description) {
-                $entry .= " | Description: " . \Illuminate\Support\Str::limit($product->description, 150);
+                $entry .= ' | Description: '.Str::limit($product->description, 150);
             }
 
             $catalogLines[] = $entry;
@@ -88,7 +102,7 @@ class GeminiRagService
      * instructions and data.
      *
      * @param  string  $catalogContext  The formatted product catalog text.
-     * @return string  The full system prompt.
+     * @return string The full system prompt.
      */
     public function buildSystemPrompt(string $catalogContext): string
     {
@@ -119,15 +133,15 @@ PERSONA;
 2. When a customer asks about products, availability, pricing, or specifications, you MUST answer ONLY based on the data in <PRODUCT_CATALOG>. Do NOT invent products, prices, or specifications.
 3. If a customer asks about a product that is NOT in the catalog, respond honestly: "That specific product is not currently available in our Elite PC catalog. Here are similar options we do carry: ..."
 4. If a product shows "OUT OF STOCK", inform the customer and suggest alternatives from the catalog that ARE in stock.
-5. Always quote the exact price and stock count from the catalog. Never estimate or round prices.
+5. Always quote the exact price and stock count from the catalog. All catalog prices are in USD ($). Never estimate, convert, or round prices.
 6. If a product lacks hardware specs (processor, GPU, etc.), it is likely a peripheral or accessory — do not guess specs.
 GROUNDING;
 
         // Assemble the final system prompt with clear data delimiters
         return $persona
-            . $groundingInstruction
-            . "\n\n<PRODUCT_CATALOG>\n"
-            . $catalogContext
-            . "\n</PRODUCT_CATALOG>";
+            .$groundingInstruction
+            ."\n\n<PRODUCT_CATALOG>\n"
+            .$catalogContext
+            ."\n</PRODUCT_CATALOG>";
     }
 }

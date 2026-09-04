@@ -38,8 +38,9 @@ class InvoicePdfTest extends TestCase
         ]);
         $html = view('invoices.invoice', ['commande' => $commande])->render();
 
-        $this->assertStringContainsString('1,599.99 EUR', $html);
-        $this->assertStringContainsString(number_format((float) $commande->total, 2).' EUR', $html);
+        $this->assertStringContainsString('$1,599.99', $html);
+        $this->assertStringContainsString('$'.number_format((float) $commande->total, 2), $html);
+        $this->assertStringContainsString('USD ($)', $html);
         $this->assertStringNotContainsString('VAT', $html);
         $this->assertStringNotContainsString('Tax', $html);
         $this->writeSample('elite-pc-invoice-multi-item.pdf', $commande);

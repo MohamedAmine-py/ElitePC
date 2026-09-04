@@ -113,16 +113,16 @@
                         @if ($detail->produit?->brand)<div class="muted">{{ $detail->produit->brand }}</div>@endif
                     </td>
                     <td class="center">{{ $detail->quantite }}</td>
-                    <td class="money">{{ number_format((float) $detail->prix_unitaire, 2) }} EUR</td>
-                    <td class="money">{{ number_format((float) $detail->prix_unitaire * (int) $detail->quantite, 2) }} EUR</td>
+                    <td class="money">${{ number_format((float) $detail->prix_unitaire, 2) }}</td>
+                    <td class="money">${{ number_format((float) $detail->prix_unitaire * (int) $detail->quantite, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
     <table class="totals-layout"><tr><td></td><td><table class="totals-box">
-        @if ($totalsMatch)<tr><td>Items subtotal</td><td class="money">{{ number_format($lineSubtotal, 2) }} EUR</td></tr>@endif
-        <tr class="grand-total"><td>Total</td><td class="money">{{ number_format($storedTotal, 2) }} EUR</td></tr>
+        @if ($totalsMatch)<tr><td>Items subtotal</td><td class="money">${{ number_format($lineSubtotal, 2) }}</td></tr>@endif
+        <tr class="grand-total"><td>Total</td><td class="money">${{ number_format($storedTotal, 2) }}</td></tr>
     </table></td></tr></table>
 
     <table class="information-table">
@@ -130,7 +130,7 @@
             <td>
                 <div class="section-label">Payment Details</div>
                 <div class="detail-row"><span class="detail-key">Method: </span><span class="detail-value">{{ $paymentLabels[$commande->payment_method] ?? 'Not provided' }}</span></div>
-                <div class="detail-row"><span class="detail-key">Currency: </span><span class="detail-value">EUR</span></div>
+                <div class="detail-row"><span class="detail-key">Currency: </span><span class="detail-value">USD ($)</span></div>
             </td>
             <td>
                 <div class="section-label">Delivery Information</div>
