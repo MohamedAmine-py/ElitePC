@@ -18,12 +18,12 @@ class AdminController extends Controller
     public function stats()
     {
         return response()->json([
-            'total_users'     => User::where('role', 'client')->count(),
-            'total_produits'  => Produit::count(),
+            'total_users' => User::where('role', 'client')->count(),
+            'total_produits' => Produit::count(),
             'total_commandes' => Commande::count(),
             'commandes_en_cours' => Commande::where('statut', 'en_cours')->count(),
-            'revenus_total'   => Commande::where('statut', 'validee')->sum('total'),
-            'recent_orders'   => Commande::with('user')->latest()->take(5)->get(),
+            'revenus_total' => Commande::where('statut', 'validee')->sum('total'),
+            'recent_orders' => Commande::with('user')->latest()->take(5)->get(),
         ]);
     }
 
@@ -31,6 +31,7 @@ class AdminController extends Controller
     public function users()
     {
         $users = User::withCount('commandes')->latest()->get();
+
         return response()->json($users);
     }
 
@@ -59,8 +60,8 @@ class AdminController extends Controller
     {
         $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['message' => 'Utilisateur non trouvé'], 404);
+        if (! $user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
 
         $request->validate([
@@ -89,17 +90,24 @@ class AdminController extends Controller
     }
 
     // DELETE /api/admin/users/{id}
-    public function destroyUser($id)
+    public function destroyUser(Request $request, $id)
     {
         $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['message' => 'Utilisateur non trouvé'], 404);
+        if (! $user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
 
-        // Check if we are trying to delete the current user (if needed, but usually we just let it happen or prevent it in UI)
+        if ($request->user()->is($user)) {
+            return response()->json(['message' => 'You cannot delete your own account'], 422);
+        }
+
+        if ($user->commandes()->exists()) {
+            return response()->json(['message' => 'Users with existing orders cannot be deleted'], 422);
+        }
+
         $user->delete();
 
-        return response()->json(['message' => 'Utilisateur supprimé']);
+        return response()->json(['message' => 'User deleted']);
     }
 }

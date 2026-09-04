@@ -13,6 +13,7 @@ class CategorieController extends Controller
     {
         // withCount('produits') adds a produits_count field automatically
         $categories = Categorie::withCount('produits')->get();
+
         return response()->json($categories);
     }
 
@@ -20,11 +21,12 @@ class CategorieController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nom'         => 'required|string|max:100|unique:categories,nom',
+            'nom' => 'required|string|max:100|unique:categories,nom',
             'description' => 'nullable|string',
         ]);
 
         $categorie = Categorie::create($request->all());
+
         return response()->json($categorie, 201);
     }
 
@@ -33,11 +35,12 @@ class CategorieController extends Controller
     {
         $categorie = Categorie::find($id);
 
-        if (!$categorie) {
-            return response()->json(['message' => 'Catégorie non trouvée'], 404);
+        if (! $categorie) {
+            return response()->json(['message' => 'Category not found'], 404);
         }
 
         $categorie->update($request->all());
+
         return response()->json($categorie);
     }
 
@@ -46,11 +49,16 @@ class CategorieController extends Controller
     {
         $categorie = Categorie::find($id);
 
-        if (!$categorie) {
-            return response()->json(['message' => 'Catégorie non trouvée'], 404);
+        if (! $categorie) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        if ($categorie->produits()->exists()) {
+            return response()->json(['message' => 'Categories containing products cannot be deleted'], 422);
         }
 
         $categorie->delete();
-        return response()->json(['message' => 'Catégorie supprimée']);
+
+        return response()->json(['message' => 'Category deleted']);
     }
 }

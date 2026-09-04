@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
             User::updateOrCreate(
                 ['email' => env('SEED_ADMIN_EMAIL', 'admin@ecommerce.test')],
                 [
-                    'nom' => env('SEED_ADMIN_NAME', 'Administrateur'),
+                    'nom' => env('SEED_ADMIN_NAME', 'Administrator'),
                     'mot_de_passe' => Hash::make(env('SEED_ADMIN_PASSWORD', 'admin123')),
                     'role' => 'admin',
                 ]
@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             User::updateOrCreate(
                 ['email' => env('SEED_CLIENT_EMAIL', 'client@ecommerce.test')],
                 [
-                    'nom' => env('SEED_CLIENT_NAME', 'Client de démonstration'),
+                    'nom' => env('SEED_CLIENT_NAME', 'Demo Customer'),
                     'mot_de_passe' => Hash::make(env('SEED_CLIENT_PASSWORD', 'client123')),
                     'role' => 'client',
                 ]

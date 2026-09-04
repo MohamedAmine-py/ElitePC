@@ -23,25 +23,25 @@ class AuthController extends Controller
     {
         // validate() automatically returns a 422 error if rules fail
         $request->validate([
-            'nom'          => 'required|string|max:100',
-            'email'        => 'required|email|unique:users,email',
+            'nom' => 'required|string|max:100',
+            'email' => 'required|email|unique:users,email',
             'mot_de_passe' => 'required|string|min:6',
         ]);
 
         $user = User::create([
-            'nom'          => $request->nom,
-            'email'        => $request->email,
+            'nom' => $request->nom,
+            'email' => $request->email,
             'mot_de_passe' => Hash::make($request->mot_de_passe), // never store plain text!
-            'role'         => 'client', // always force client role on registration
+            'role' => 'client', // always force client role on registration
         ]);
 
         // Create a Sanctum token for the new user
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Inscription réussie',
-            'user'    => $user,
-            'token'   => $token,
+            'message' => 'Registration successful',
+            'user' => $user,
+            'token' => $token,
         ], 201);
     }
 
@@ -49,15 +49,15 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'        => 'required|email',
+            'email' => 'required|email',
             'mot_de_passe' => 'required|string',
         ]);
 
         $user = User::where('email', $request->email)->first();
 
         // Hash::check() compares the plain password with the stored hash
-        if (!$user || !Hash::check($request->mot_de_passe, $user->mot_de_passe)) {
-            return response()->json(['message' => 'Email ou mot de passe incorrect'], 401);
+        if (! $user || ! Hash::check($request->mot_de_passe, $user->mot_de_passe)) {
+            return response()->json(['message' => 'Incorrect email or password'], 401);
         }
 
         // Delete old tokens (single session) and create a new one
@@ -65,9 +65,9 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Connexion réussie',
-            'user'    => $user,
-            'token'   => $token,
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token,
         ]);
     }
 
@@ -77,7 +77,7 @@ class AuthController extends Controller
         // Delete only the current token being used
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Déconnexion réussie']);
+        return response()->json(['message' => 'Logout successful']);
     }
 
     // GET /api/user — returns the currently logged-in user

@@ -47,12 +47,12 @@ class CommandeController extends Controller
         $commande = Commande::with(['details.produit', 'user'])->find($id);
 
         if (! $commande) {
-            return response()->json(['message' => 'Commande non trouvée'], 404);
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
         // Client can only see their own orders
         if ($user->role !== 'admin' && $commande->user_id !== $user->id) {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         return response()->json($commande);
@@ -81,7 +81,7 @@ class CommandeController extends Controller
 
                 if ($produit->stock < $quantite) {
                     return response()->json([
-                        'message' => "Stock insuffisant pour : {$produit->nom}",
+                        'message' => "Insufficient stock for: {$produit->nom}",
                     ], 422);
                 }
             }
@@ -156,7 +156,7 @@ class CommandeController extends Controller
             $commande = Commande::lockForUpdate()->find($id);
 
             if (! $commande) {
-                return response()->json(['message' => 'Commande non trouvée'], 404);
+                return response()->json(['message' => 'Order not found'], 404);
             }
 
             $details = $commande->details()->orderBy('produit_id')->get();
@@ -179,8 +179,8 @@ class CommandeController extends Controller
                     if (! $produit || $produit->stock < $quantite) {
                         return response()->json([
                             'message' => $produit
-                                ? "Stock insuffisant pour : {$produit->nom}"
-                                : 'Un produit de cette commande n’existe plus',
+                                ? "Insufficient stock for: {$produit->nom}"
+                                : 'A product in this order no longer exists',
                         ], 422);
                     }
                 }
@@ -203,7 +203,7 @@ class CommandeController extends Controller
             $commande = Commande::lockForUpdate()->find($id);
 
             if (! $commande) {
-                return response()->json(['message' => 'Commande non trouvée'], 404);
+                return response()->json(['message' => 'Order not found'], 404);
             }
 
             $details = $commande->details()->orderBy('produit_id')->get();
@@ -226,7 +226,7 @@ class CommandeController extends Controller
 
             $commande->delete();
 
-            return response()->json(['message' => 'Commande supprimée']);
+            return response()->json(['message' => 'Order deleted']);
         });
     }
 
@@ -237,12 +237,12 @@ class CommandeController extends Controller
         $commande = Commande::with(['details.produit', 'user'])->find($id);
 
         if (! $commande) {
-            return response()->json(['message' => 'Commande non trouvée'], 404);
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
         // Client can only download their own invoices
         if ($user->role !== 'admin' && $commande->user_id !== $user->id) {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Generate a print-ready A4 invoice from the authoritative stored order.

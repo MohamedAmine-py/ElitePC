@@ -30,10 +30,10 @@ class ProduitController extends Controller
         // Optional search by name or brand
         if ($request->has('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('nom', 'like', '%' . $request->search . '%')
-                  ->orWhere('brand', 'like', '%' . $request->search . '%')
-                  ->orWhere('processor', 'like', '%' . $request->search . '%')
-                  ->orWhere('graphics_card', 'like', '%' . $request->search . '%');
+                $q->where('nom', 'like', '%'.$request->search.'%')
+                    ->orWhere('brand', 'like', '%'.$request->search.'%')
+                    ->orWhere('processor', 'like', '%'.$request->search.'%')
+                    ->orWhere('graphics_card', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -47,8 +47,8 @@ class ProduitController extends Controller
     {
         $produit = Produit::with('categorie')->find($id);
 
-        if (!$produit) {
-            return response()->json(['message' => 'Produit non trouvé'], 404);
+        if (! $produit) {
+            return response()->json(['message' => 'Product not found'], 404);
         }
 
         return response()->json($produit);
@@ -58,17 +58,17 @@ class ProduitController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nom'             => 'required|string|max:200',
-            'prix'            => 'required|numeric|min:0',
-            'stock'           => 'required|integer|min:0',
-            'categorie_id'    => 'required|exists:categories,id',
-            'description'     => 'nullable|string',
-            'image'           => 'nullable|string',
+            'nom' => 'required|string|max:200',
+            'prix' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'categorie_id' => 'required|exists:categories,id',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string',
             // Hardware spec fields
-            'brand'           => 'nullable|string|max:100',
-            'processor'       => 'nullable|string|max:200',
-            'graphics_card'   => 'nullable|string|max:200',
-            'ram_details'     => 'nullable|string|max:200',
+            'brand' => 'nullable|string|max:100',
+            'processor' => 'nullable|string|max:200',
+            'graphics_card' => 'nullable|string|max:200',
+            'ram_details' => 'nullable|string|max:200',
             'storage_details' => 'nullable|string|max:200',
             'is_custom_build' => 'nullable|boolean',
         ]);
@@ -83,22 +83,22 @@ class ProduitController extends Controller
     {
         $produit = Produit::find($id);
 
-        if (!$produit) {
-            return response()->json(['message' => 'Produit non trouvé'], 404);
+        if (! $produit) {
+            return response()->json(['message' => 'Product not found'], 404);
         }
 
         $request->validate([
-            'nom'             => 'sometimes|string|max:200',
-            'prix'            => 'sometimes|numeric|min:0',
-            'stock'           => 'sometimes|integer|min:0',
-            'categorie_id'    => 'sometimes|exists:categories,id',
-            'description'     => 'nullable|string',
-            'image'           => 'nullable|string',
+            'nom' => 'sometimes|string|max:200',
+            'prix' => 'sometimes|numeric|min:0',
+            'stock' => 'sometimes|integer|min:0',
+            'categorie_id' => 'sometimes|exists:categories,id',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string',
             // Hardware spec fields
-            'brand'           => 'nullable|string|max:100',
-            'processor'       => 'nullable|string|max:200',
-            'graphics_card'   => 'nullable|string|max:200',
-            'ram_details'     => 'nullable|string|max:200',
+            'brand' => 'nullable|string|max:100',
+            'processor' => 'nullable|string|max:200',
+            'graphics_card' => 'nullable|string|max:200',
+            'ram_details' => 'nullable|string|max:200',
             'storage_details' => 'nullable|string|max:200',
             'is_custom_build' => 'nullable|boolean',
         ]);
@@ -113,12 +113,16 @@ class ProduitController extends Controller
     {
         $produit = Produit::find($id);
 
-        if (!$produit) {
-            return response()->json(['message' => 'Produit non trouvé'], 404);
+        if (! $produit) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        if ($produit->detailsCommandes()->exists()) {
+            return response()->json(['message' => 'Products referenced by existing orders cannot be deleted'], 422);
         }
 
         $produit->delete();
 
-        return response()->json(['message' => 'Produit supprimé']);
+        return response()->json(['message' => 'Product deleted']);
     }
 }
