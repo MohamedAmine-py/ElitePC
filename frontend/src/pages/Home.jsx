@@ -22,13 +22,14 @@ export default function Home() {
   }, []);
 
   const featured = products.slice(0, 4);
-  const heroImage = "/categories/gamer-pcs.webp";
+  const heroImage = "/products/nova-strike-esports.webp";
+  const promoImage = "/categories/gamer-pcs.webp";
 
   return (
     <>
       <section className="hero" style={{ "--hero-image": `url("${heroImage}")` }}>
         <div className="hero-inner animate-item storefront-container">
-          <div className="hero-tag">Elite PC · High-performance hardware</div>
+          <div className="hero-tag">Elite PC • High-performance hardware</div>
           <h1 className="hero-title">
             Built for <em>Performance</em>
           </h1>
@@ -100,7 +101,7 @@ export default function Home() {
               <Link className="text-link" to="/contact">Need help?</Link>
             </div>
           </div>
-          <div className="promo-image" style={{ backgroundImage: `url("${heroImage}")` }} role="img" aria-label="Elite PC computer hardware" />
+          <div className="promo-image" style={{ backgroundImage: `url("${promoImage}")` }} role="img" aria-label="Elite PC computer hardware" />
         </section>
 
         <section className="benefits" aria-label="Store benefits">

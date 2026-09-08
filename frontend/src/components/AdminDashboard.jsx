@@ -162,7 +162,7 @@ export default function AdminDashboard({ token, user, onToast }) {
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <div className="admin-brand"><BrandLogo variant="dark-surface" /><span>Admin</span></div>
+        <div className="admin-brand"><BrandLogo /><span>Admin</span></div>
         <nav aria-label="Admin navigation">{tabs.map(([id, label]) => <button key={id} className={tab === id ? "is-active" : ""} onClick={() => setTab(id)}><span><AdminNavIcon name={id} /></span>{label}</button>)}</nav>
         <Link className="admin-store-link" to="/">← Return to storefront</Link>
       </aside>

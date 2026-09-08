@@ -190,7 +190,7 @@ export default function Layout({ children }) {
                         justifyContent: "center",
                         fontSize: 28,
                         fontWeight: 900,
-                        color: "#0f172a",
+                        color: "#fff",
                         margin: "0 auto 16px",
                       }}
                     >

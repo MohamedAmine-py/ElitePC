@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-grid">
           <div className="footer-brand">
-            <Link className="footer-logo" to="/" aria-label="Elite PC home"><BrandLogo variant="dark-surface" /></Link>
+            <Link className="footer-logo" to="/" aria-label="Elite PC home"><BrandLogo /></Link>
             <p>High-performance PC hardware and systems, presented in a clear, considered shopping experience.</p>
           </div>
           <div className="footer-col">

@@ -39,13 +39,6 @@ export function AppProvider({ children }) {
     return readFavorites(user);
   });
   
-  const [darkMode, setDarkMode] = useState(() => {
-    const stored = localStorage.getItem("theme");
-    return stored
-      ? stored === "dark"
-      : window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
-
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -53,17 +46,6 @@ export function AppProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const toastSequence = useRef(0);
   const toastTimers = useRef(new Map());
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
-    if (darkMode) {
-      document.body.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.body.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
 
   useEffect(() => {
     if (!token) return;
@@ -172,7 +154,7 @@ export function AppProvider({ children }) {
       cartOpen, setCartOpen, authOpen, setAuthOpen, toasts, toast,
       handleLogin, handleLogout,
       addToCart, updateCartItem, removeFromCart, clearCart,
-      darkMode, setDarkMode, favorites, toggleFavorite,
+      favorites, toggleFavorite,
       search, setSearch, selectedProduct, setSelectedProduct
     }}>
       {children}

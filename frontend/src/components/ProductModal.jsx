@@ -1,13 +1,12 @@
-import React from 'react';
-import { applyProductFallback, productImage } from '../utils/productAssets';
-import { formatCurrency } from '../utils/currency';
+import React from "react";
+import { applyProductFallback, productImage } from "../utils/productAssets";
+import { formatCurrency } from "../utils/currency";
 
 export default function ProductModal({ product, onClose, onAddToCart }) {
   if (!product) return null;
-  const img = productImage(product);
+
   const isOut = product.stock === 0;
   const isLimited = !isOut && product.stock <= 5;
-
   const specs = [
     { label: "Processor", value: product.processor },
     { label: "Graphics Card", value: product.graphics_card },
@@ -16,95 +15,54 @@ export default function ProductModal({ product, onClose, onAddToCart }) {
     { label: "Brand", value: product.brand },
     { label: "Category", value: product.categorie?.nom || "Hardware" },
     { label: "Availability", value: isOut ? "Out of Stock" : `${product.stock} Units Available` },
-    { label: "Warranty", value: "3 Years Elite PC Care" }
-  ].filter(s => s.value);
+    { label: "Warranty", value: "3 Years Elite PC Care" },
+  ].filter((spec) => spec.value);
 
   return (
-    <div
-      onClick={onClose}
-      style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,0.8)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fadeIn .2s ease" }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background: "#0f172a", borderRadius: 24, width: "100%", maxWidth: 900, maxHeight: "90vh", overflow: "hidden", display: "flex", boxShadow: "0 40px 80px rgba(0,0,0,0.5)", border: "1px solid #1e293b", animation: "scaleIn .25s cubic-bezier(.16,1,.3,1)" }}
-      >
-        {/* Image side */}
-        <div style={{ width: "45%", flexShrink: 0, background: "#000", position: "relative", overflow: "hidden" }}>
-          <img
-            src={img}
-            alt={product.nom}
-            onError={event => applyProductFallback(event, product)}
-            decoding="async"
-            style={{ width: "100%", height: "100%", objectFit: "contain", opacity: 0.9 }}
-          />
-          {isOut && (
-            <div style={{ position: "absolute", top: 16, left: 16, background: "#ef4444", color: "#fff", padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>SOLD OUT</div>
-          )}
-          {isLimited && (
-            <div style={{ position: "absolute", top: 16, left: 16, background: "#f59e0b", color: "#fff", padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>LIMITED STOCK</div>
-          )}
+    <div className="quick-view-overlay" onClick={onClose}>
+      <section className="quick-view" onClick={(event) => event.stopPropagation()} aria-modal="true" role="dialog" aria-label={product.nom}>
+        <div className="quick-view-media">
+          <img src={productImage(product)} alt={product.nom} onError={(event) => applyProductFallback(event, product)} decoding="async" />
+          {isOut && <span className="quick-view-badge is-out">Sold out</span>}
+          {isLimited && <span className="quick-view-badge is-limited">Limited stock</span>}
         </div>
 
-        {/* Info side */}
-        <div style={{ flex: 1, padding: "36px 36px 36px 32px", overflowY: "auto", display: "flex", flexDirection: "column", background: "#0f172a" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#06b6d4", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              {product.categorie?.nom || "Hardware"}
-            </div>
-            <button
-              onClick={onClose}
-              style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 10, width: 36, height: 36, cursor: "pointer", fontSize: 16, color: "#94a3b8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-            >✕</button>
-          </div>
+        <div className="quick-view-content">
+          <header className="quick-view-header">
+            <span>{product.categorie?.nom || "Hardware"}</span>
+            <button type="button" onClick={onClose} aria-label="Close quick view">×</button>
+          </header>
+          <h2>{product.nom}</h2>
+          <p className="quick-view-description">{product.description || "High-performance PC hardware component."}</p>
 
-          <h2 style={{ fontSize: 26, fontWeight: 900, color: "#f8fafc", lineHeight: 1.2, marginBottom: 16, letterSpacing: -0.5 }}>{product.nom}</h2>
-
-          <div style={{ display: "flex", gap: 2, marginBottom: 20 }}>
-            {[1,2,3,4,5].map(s => <span key={s} style={{ color: "#f59e0b", fontSize: 16 }}>★</span>)}
-            <span style={{ fontSize: 13, color: "#64748b", marginLeft: 8, alignSelf: "center" }}>5.0 (Pro Verified)</span>
-          </div>
-
-          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.6, marginBottom: 28 }}>
-            {product.description || "High-performance PC hardware component."}
-          </p>
-
-          <div style={{ background: "#1e293b", borderRadius: 12, border: "1px solid #334155", overflow: "hidden", marginBottom: 28 }}>
-            <div style={{ padding: "12px 16px", background: "#0f172a", borderBottom: "1px solid #334155", fontSize: 12, fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Technical Specifications
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", padding: "8px 0", maxHeight: "200px", overflowY: "auto" }}>
-              {specs.map((item, i) => (
-                <div key={item.label} style={{ display: "grid", gridTemplateColumns: "140px 1fr", padding: "8px 16px", borderBottom: i < specs.length - 1 ? "1px solid #334155" : "none" }}>
-                  <div style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>{item.label}</div>
-                  <div style={{ fontSize: 13, color: "#f8fafc", fontFamily: "Inter, sans-serif" }}>{item.value}</div>
+          <div className="quick-view-specs">
+            <h3>Technical specifications</h3>
+            <dl>
+              {specs.map((spec) => (
+                <div key={spec.label}>
+                  <dt>{spec.label}</dt>
+                  <dd>{spec.value}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Price</div>
-              <div style={{ fontSize: 36, fontWeight: 900, color: "#06b6d4", fontFamily: "JetBrains Mono,monospace" }}>{formatCurrency(product.prix)}</div>
-            </div>
+          <div className="quick-view-price">
+            <span>Price</span>
+            <strong>{formatCurrency(product.prix)}</strong>
           </div>
-
           <button
+            className="quick-view-add"
             disabled={isOut}
-            onClick={() => { onAddToCart(product); onClose(); }}
-            style={{
-              width: "100%", padding: "16px 0", borderRadius: 12, border: "none",
-              background: isOut ? "#334155" : "linear-gradient(135deg, #06b6d4, #3b82f6)",
-              color: isOut ? "#64748b" : "#fff", fontSize: 15, fontWeight: 800,
-              cursor: isOut ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif",
-              boxShadow: isOut ? "none" : "0 8px 24px rgba(6, 182, 212, 0.3)",
-              transition: "all 0.2s", letterSpacing: 0.3
+            onClick={() => {
+              onAddToCart(product);
+              onClose();
             }}
           >
-            {isOut ? "OUT OF STOCK" : "🛒 ADD TO CART"}
+            {isOut ? "Out of stock" : "Add to cart →"}
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
