@@ -34,6 +34,12 @@ export default function SupportChat() {
 
   const historyEndRef = useRef(null);
 
+  useEffect(() => {
+    const openAssistant = () => setIsOpen(true);
+    window.addEventListener("elitepc:open-assistant", openAssistant);
+    return () => window.removeEventListener("elitepc:open-assistant", openAssistant);
+  }, []);
+
   // Automatically scroll to the bottom when messages or loading states change
   useEffect(() => {
     if (historyEndRef.current) {
