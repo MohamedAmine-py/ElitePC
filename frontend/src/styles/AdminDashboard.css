@@ -23,7 +23,7 @@
 .admin-page-heading > div > span { color: var(--accent); font: 600 8px 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; }
 .admin-page-heading h1 { margin: 7px 0 5px; color: #f2f5f7; font-size: 34px; line-height: 1.05; letter-spacing: -1.2px; }
 .admin-page-heading p { color: #8995a0; font-size: 11px; }
-.admin-count { padding: 6px 9px; border: 1px solid #303b46; border-radius: 3px; color: #84919c; font: 600 8px 'JetBrains Mono', monospace; text-transform: uppercase; }
+.admin-count { padding: 6px 9px; border: 1px solid var(--availability); border-radius: 3px; color: var(--availability); font: 600 8px 'JetBrains Mono', monospace; text-transform: uppercase; }
 
 .admin-stat-grid { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 10px; margin-bottom: 18px; }
 .admin-stat { min-height: 128px; padding: 18px; border: 1px solid #26313b; border-radius: 4px; background: #11171e; }
@@ -67,13 +67,15 @@
 .admin-price { color: #eef3f5 !important; font-weight: 700; white-space: nowrap; }
 .admin-description { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-stock, .admin-status, .admin-role-badge { display: inline-flex; padding: 4px 7px; border: 1px solid rgba(225, 6, 0, .32); border-radius: 3px; color: var(--accent); font: 650 8px 'JetBrains Mono', monospace; text-transform: uppercase; }
-.admin-stock.is-low, .admin-status.is-en_cours { border-color: rgba(231, 179, 93, .4); color: #e7b35d; }
-.admin-stock.is-out, .admin-status.is-annulee { border-color: rgba(226, 112, 112, .4); color: #e27070; }
-.admin-status.is-validee { border-color: rgba(225, 6, 0, .4); color: var(--accent); }
+.admin-stock { border-color: var(--availability); color: var(--availability); }
+.admin-stock.is-low { border-color: rgba(231, 179, 93, .4); color: #e7b35d; }
+.admin-stock.is-out { border-color: rgba(226, 112, 112, .4); color: #e27070; }
 .admin-role-badge.is-client { border-color: #3a4651; color: #aab5bf; }
 .admin-role-badge.is-admin { border-color: rgba(225, 6, 0, .4); color: var(--accent); }
 .admin-status-select { min-width: 104px; height: 32px; padding: 0 8px; border: 1px solid #3d4853; border-radius: 3px; outline: 0; background: #171e26; color: #d2dae0; font-size: 9px; font-weight: 700; }
-.admin-status-select.is-en_cours { color: #e7b35d; }.admin-status-select.is-validee { color: var(--accent); }.admin-status-select.is-annulee { color: #e27070; }
+.admin-status-select option[value="en_cours"] { color: var(--status-progress); }
+.admin-status-select option[value="validee"] { color: var(--status-confirmed); }
+.admin-status-select option[value="annulee"] { color: var(--status-cancelled); }
 .admin-actions { display: flex; justify-content: flex-end; gap: 5px; white-space: nowrap; }
 .admin-actions button { min-height: 30px; padding: 0 9px; border: 1px solid #3a4651; border-radius: 3px; background: #171e26; color: #b7c1c9; font: 650 8px 'Inter', sans-serif; cursor: pointer; }
 .admin-actions button:hover { border-color: var(--accent); color: var(--accent); }

@@ -51,7 +51,7 @@ export default function OrderDetails() {
         ))}</div></section>
         <aside className="order-info-column">
           <section className="order-info-panel"><h2>Delivery Information</h2><dl>{order.user?.nom && <><dt>Customer</dt><dd>{order.user.nom}</dd></>}<dt>Address</dt><dd>{order.delivery_address || "Not provided"}</dd><dt>Phone</dt><dd>{order.delivery_phone || "Not provided"}</dd>{order.estimated_delivery_date && <><dt>Estimated delivery</dt><dd>{new Date(order.estimated_delivery_date).toLocaleDateString()}</dd></>}</dl></section>
-          <section className="order-info-panel"><h2>Order Summary</h2><dl>{order.payment_method && <><dt>Payment method</dt><dd className="capitalize">{order.payment_method.replace(/_/g, " ")}</dd></>}<dt>Status</dt><dd>{statusLabel[order.statut] || order.statut}</dd></dl><div className="order-grand-total"><span>Total</span><strong>{formatCurrency(order.total)}</strong></div></section>
+          <section className="order-info-panel"><h2>Order Summary</h2><dl>{order.payment_method && <><dt>Payment method</dt><dd className="capitalize">{order.payment_method.replace(/_/g, " ")}</dd></>}<dt>Status</dt><dd className={`order-status-text is-${order.statut}`}>{statusLabel[order.statut] || order.statut}</dd></dl><div className="order-grand-total"><span>Total</span><strong>{formatCurrency(order.total)}</strong></div></section>
         </aside>
       </div>
     </main>
