@@ -22,8 +22,8 @@ export default function Home() {
   }, []);
 
   const featured = products.slice(0, 4);
-  const heroImage = "/products/nova-strike-esports.webp";
-  const promoImage = "/categories/gamer-pcs.webp";
+  const heroImage = "/performance-components.webp";
+  const promoImage = "/hero-performance.webp";
 
   return (
     <>
