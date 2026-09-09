@@ -72,6 +72,29 @@ class InvoicePdfTest extends TestCase
         $this->writeSample('elite-pc-invoice-multi-page.pdf', $commande, $pdf);
     }
 
+    public function test_invoice_branding_and_status_colors_are_semantic(): void
+    {
+        $commande = $this->orderWithItems([['Elite GPU', 1, 1599.99]]);
+        Sanctum::actingAs($commande->user);
+        $logo = file_get_contents(public_path('images/elite-pc-logo-light.svg'));
+
+        foreach (['validee' => '#22c55e', 'en_cours' => '#f59e0b', 'annulee' => '#e10600'] as $status => $color) {
+            $commande->update(['statut' => $status]);
+            $html = view('invoices.invoice', ['commande' => $commande])->render();
+            $this->assertStringContainsString('class="status status-'.$status.'"', $html);
+            $this->assertStringContainsString('.status-'.$status.' { border-color: '.$color.'; color: '.$color.'; }', $html);
+            $this->assertStringContainsString('.invoice-number { color: #e10600;', $html);
+            foreach (['#00b8d4', '#008fa3', '#00d4ee'] as $obsoleteColor) {
+                $this->assertStringNotContainsString($obsoleteColor, strtolower($html.$logo));
+            }
+            $response = $this->get('/api/orders/'.$commande->id.'/invoice');
+            $response->assertOk()->assertHeader('content-type', 'application/pdf');
+            $this->assertStringStartsWith('%PDF-', $response->getContent());
+            $this->writeSample('elite-pc-invoice-'.$status.'.pdf', $commande, $response->getContent());
+        }
+        $this->assertStringContainsString('stroke="#e10600"', $logo);
+    }
+
     private function orderWithItems(array $items): Commande
     {
         $user = User::create([

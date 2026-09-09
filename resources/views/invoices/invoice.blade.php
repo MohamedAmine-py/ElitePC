@@ -7,7 +7,7 @@
         @page { margin: 34mm 16mm 24mm; }
         * { box-sizing: border-box; }
         body { margin: 0; color: #17212b; background: #fff; font-family: DejaVu Sans, Arial, sans-serif; font-size: 10px; line-height: 1.45; }
-        .top-rule { position: fixed; top: -34mm; left: -16mm; right: -16mm; height: 4px; background: #00b8d4; }
+        .top-rule { position: fixed; top: -34mm; left: -16mm; right: -16mm; height: 4px; background: #e10600; }
         .footer { position: fixed; right: 0; bottom: -17mm; left: 0; padding-top: 8px; border-top: 1px solid #dce3e8; color: #687783; font-size: 8px; }
         .footer-table, .header-table, .address-table, .information-table, .totals-layout { width: 100%; border-collapse: collapse; }
         .footer-table td:last-child, .header-meta { text-align: right; }
@@ -16,12 +16,15 @@
         .logo { width: 145px; height: auto; margin-bottom: 7px; }
         .tagline { color: #687783; font-size: 8px; font-weight: bold; letter-spacing: 1.2px; text-transform: uppercase; }
         .invoice-title { margin: 0 0 5px; color: #101820; font-size: 27px; font-weight: bold; letter-spacing: -.5px; text-transform: uppercase; }
-        .invoice-number { color: #008fa3; font-size: 12px; font-weight: bold; }
+        .invoice-number { color: #e10600; font-size: 12px; font-weight: bold; }
         .metadata { margin-top: 9px; color: #52616c; font-size: 9px; }
         .metadata-row { margin-bottom: 4px; }
         .metadata-row:last-child { margin-bottom: 0; }
-        .status { display: inline-block; padding: 3px 8px; border: 1px solid #9cced5; background: #ecfafc; color: #08788a; font-size: 8px; font-weight: bold; line-height: 1.2; text-transform: uppercase; }
-        .section-label { margin-bottom: 7px; color: #008fa3; font-size: 8px; font-weight: bold; letter-spacing: 1.1px; text-transform: uppercase; }
+        .status { display: inline-block; padding: 3px 8px; border: 1px solid #687783; background: #fff; color: #17212b; font-size: 8px; font-weight: bold; line-height: 1.2; text-transform: uppercase; }
+        .status-en_cours { border-color: #f59e0b; color: #f59e0b; }
+        .status-validee { border-color: #22c55e; color: #22c55e; }
+        .status-annulee { border-color: #e10600; color: #e10600; }
+        .section-label { margin-bottom: 7px; color: #e10600; font-size: 8px; font-weight: bold; letter-spacing: 1.1px; text-transform: uppercase; }
         .address-table { margin-bottom: 23px; table-layout: fixed; }
         .address-table td { width: 50%; padding: 12px 14px; border: 1px solid #dce3e8; vertical-align: top; }
         .address-table td + td { border-left: 0; }
@@ -30,7 +33,7 @@
         .items-table { width: 100%; margin-bottom: 18px; border-collapse: collapse; table-layout: fixed; }
         .items-table thead { display: table-header-group; }
         .items-table tr { page-break-inside: avoid; }
-        .items-table th { padding: 9px 8px; border-bottom: 2px solid #00b8d4; background: #17212b; color: #fff; font-size: 8px; letter-spacing: .7px; text-align: left; text-transform: uppercase; }
+        .items-table th { padding: 9px 8px; border-bottom: 2px solid #e10600; background: #17212b; color: #fff; font-size: 8px; letter-spacing: .7px; text-align: left; text-transform: uppercase; }
         .items-table td { padding: 10px 8px; border-bottom: 1px solid #e5eaee; vertical-align: top; }
         .items-table tbody tr:nth-child(even) { background: #f7f9fa; }
         .product-name { font-weight: bold; overflow-wrap: break-word; }
@@ -43,7 +46,7 @@
         .totals-box { width: 100%; border-collapse: collapse; }
         .totals-box td { padding: 7px 9px; border-bottom: 1px solid #dce3e8; }
         .totals-box .grand-total td { padding-top: 10px; border-top: 2px solid #17212b; border-bottom: 0; color: #101820; font-size: 14px; font-weight: bold; }
-        .totals-box .grand-total td:last-child { color: #008fa3; }
+        .totals-box .grand-total td:last-child { color: #e10600; }
         .information-table { page-break-inside: avoid; table-layout: fixed; }
         .information-table td { width: 50%; padding: 12px 14px; border: 1px solid #dce3e8; vertical-align: top; }
         .information-table td + td { border-left: 0; }
@@ -51,7 +54,7 @@
         .detail-row:last-child { margin-bottom: 0; }
         .detail-key { color: #71808b; }
         .detail-value { color: #17212b; font-weight: bold; }
-        .thank-you { margin-top: 18px; padding: 10px 12px; border-left: 3px solid #00b8d4; background: #f3fafb; color: #52616c; page-break-inside: avoid; }
+        .thank-you { margin-top: 18px; padding: 10px 12px; border-left: 3px solid #e10600; background: #f7f9fa; color: #52616c; page-break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -81,7 +84,7 @@
                 <div class="metadata">
                     <div class="metadata-row">Issued {{ $commande->created_at->format('F d, Y') }}</div>
                     <div class="metadata-row">Order #{{ $commande->id }}</div>
-                    <div class="metadata-row"><span class="status">{{ $statusLabels[$commande->statut] ?? ucfirst(str_replace('_', ' ', $commande->statut)) }}</span></div>
+                    <div class="metadata-row"><span class="status status-{{ $commande->statut }}">{{ $statusLabels[$commande->statut] ?? ucfirst(str_replace('_', ' ', $commande->statut)) }}</span></div>
                 </div>
             </td>
         </tr>
