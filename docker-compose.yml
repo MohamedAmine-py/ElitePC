@@ -42,6 +42,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_REQUEST_TIMEOUT: ${GEMINI_REQUEST_TIMEOUT:-30}
+      ELITE_AI_AGENT_ENABLED: ${ELITE_AI_AGENT_ENABLED:-true}
     volumes:
       - laravel_runtime:/var/www/html/storage/docker
     ports:
