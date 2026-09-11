@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\Commande;
 use App\Models\Produit;
+use App\Services\CartService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,8 @@ class CommandeController extends Controller
     public function store(StoreOrderRequest $request)
     {
         return DB::transaction(function () use ($request) {
+            $cart = app(CartService::class);
+            $cart->lockUser($request->user());
             $items = collect($request->items);
             $requestedQuantities = $items
                 ->groupBy('produit_id')
@@ -123,6 +126,8 @@ class CommandeController extends Controller
             foreach ($requestedQuantities as $produitId => $quantite) {
                 $produits->get($produitId)->decrement('stock', $quantite);
             }
+
+            $cart->clearPurchased($request->user(), $request->validated('items'));
 
             return response()->json($commande->load('details.produit'), 201);
         });

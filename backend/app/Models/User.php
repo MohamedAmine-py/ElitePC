@@ -43,4 +43,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Commande::class, 'user_id');
     }
+
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class);
+    }
 }

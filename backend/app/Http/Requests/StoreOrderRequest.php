@@ -48,12 +48,14 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'items'              => 'required|array|min:1|max:50',
+            'items' => 'required|array|min:1|max:50',
             'items.*.produit_id' => 'required|integer|exists:produits,id',
-            'items.*.quantite'   => 'required|integer|min:1|max:100',
-            'payment_method'     => 'required|string|in:credit_card,paypal,cash_on_delivery',
-            'delivery_address'   => 'required|string|min:10|max:500',
-            'delivery_phone'     => [
+            'items.*.quantite' => 'required|integer|min:1|max:100',
+            'items.*.cart_item_id' => 'sometimes|required|integer|min:1',
+            'items.*.cart_updated_at' => 'sometimes|required|date_format:Y-m-d H:i:s.u',
+            'payment_method' => 'required|string|in:credit_card,paypal,cash_on_delivery',
+            'delivery_address' => 'required|string|min:10|max:500',
+            'delivery_phone' => [
                 'required',
                 'string',
                 'min:8',
@@ -71,14 +73,14 @@ class StoreOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.required'             => 'Your order must contain at least one item.',
-            'items.max'                  => 'An order cannot exceed 50 different items.',
-            'items.*.produit_id.exists'  => 'One or more selected products do not exist.',
-            'items.*.quantite.max'       => 'You cannot order more than 100 units of a single product.',
-            'payment_method.in'          => 'Invalid payment method. Choose from: credit_card, paypal, or cash_on_delivery.',
-            'delivery_address.min'       => 'Please provide a complete delivery address (at least 10 characters).',
-            'delivery_address.max'       => 'Delivery address is too long (max 500 characters).',
-            'delivery_phone.regex'       => 'Phone number can only contain digits, +, -, spaces, and parentheses.',
+            'items.required' => 'Your order must contain at least one item.',
+            'items.max' => 'An order cannot exceed 50 different items.',
+            'items.*.produit_id.exists' => 'One or more selected products do not exist.',
+            'items.*.quantite.max' => 'You cannot order more than 100 units of a single product.',
+            'payment_method.in' => 'Invalid payment method. Choose from: credit_card, paypal, or cash_on_delivery.',
+            'delivery_address.min' => 'Please provide a complete delivery address (at least 10 characters).',
+            'delivery_address.max' => 'Delivery address is too long (max 500 characters).',
+            'delivery_phone.regex' => 'Phone number can only contain digits, +, -, spaces, and parentheses.',
         ];
     }
 }

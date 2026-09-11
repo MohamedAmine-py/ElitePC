@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getCurrentUser, logout as apiLogout } from "../api/client";
 import AppContext from "./app-context";
+import useCart from "./useCart";
 
 const favoriteStorageKey = (user) => user?.id
   ? `elite-pc:favorites:user:${user.id}`
@@ -31,7 +32,6 @@ export function AppProvider({ children }) {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user") || "null"));
   const [token, setToken] = useState(() => localStorage.getItem("token") || null);
   
-  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("cart") || "[]"));
   const [favorites, setFavorites] = useState(() => {
     // The former global key could contain another account's data, so it is
     // intentionally discarded instead of being assigned or merged.
@@ -85,6 +85,8 @@ export function AppProvider({ children }) {
     toastTimers.current.clear();
   }, []);
 
+  const cartState = useCart(token, toast);
+
   const handleLogin = useCallback((userData, userToken) => {
     setFavorites(readFavorites(userData));
     setUser(userData); setToken(userToken);
@@ -101,39 +103,6 @@ export function AppProvider({ children }) {
     toast("Signed out successfully");
   }, [token, toast]);
 
-  const addToCart = useCallback((product) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
-      const updated = existing
-        ? prev.map((i) => i.id === product.id ? { ...i, quantite: i.quantite + 1 } : i)
-        : [...prev, { ...product, quantite: 1 }];
-      localStorage.setItem("cart", JSON.stringify(updated));
-      return updated;
-    });
-    toast(`${product.nom} added to cart`);
-  }, [toast]);
-
-  const removeFromCart = useCallback((id) => {
-    setCart((prev) => {
-      const updated = prev.filter((i) => i.id !== id);
-      localStorage.setItem("cart", JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  const updateCartItem = useCallback((id, qty) => {
-    if (qty < 1) { removeFromCart(id); return; }
-    setCart((prev) => {
-      const updated = prev.map((i) => i.id === id ? { ...i, quantite: qty } : i);
-      localStorage.setItem("cart", JSON.stringify(updated));
-      return updated;
-    });
-  }, [removeFromCart]);
-
-  const clearCart = useCallback(() => {
-    setCart([]); localStorage.removeItem("cart");
-  }, []);
-
   const toggleFavorite = useCallback((product) => {
     const exists = favorites.some((favorite) => favorite.id === product.id);
     const updated = exists
@@ -145,15 +114,11 @@ export function AppProvider({ children }) {
     toast(exists ? "Removed from favorites" : "Added to favorites", "success");
   }, [favorites, toast, user]);
 
-  const cartCount = cart.reduce((s, i) => s + i.quantite, 0);
-  const cartTotal = cart.reduce((s, i) => s + i.prix * i.quantite, 0);
-
   return (
     <AppContext.Provider value={{
-      user, token, cart, cartCount, cartTotal,
+      user, token, ...cartState,
       cartOpen, setCartOpen, authOpen, setAuthOpen, toasts, toast,
       handleLogin, handleLogout,
-      addToCart, updateCartItem, removeFromCart, clearCart,
       favorites, toggleFavorite,
       search, setSearch, selectedProduct, setSelectedProduct
     }}>

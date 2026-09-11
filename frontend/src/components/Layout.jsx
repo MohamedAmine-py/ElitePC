@@ -18,6 +18,10 @@ export default function Layout({ children }) {
     cart,
     cartCount,
     cartTotal,
+    cartLoading,
+    cartError,
+    cartBusy,
+    refreshCart,
     cartOpen,
     setCartOpen,
     authOpen,
@@ -96,7 +100,7 @@ export default function Layout({ children }) {
               <button className="drawer-x" onClick={() => setCartOpen(false)}>✕</button>
             </div>
             <div className="drawer-body">
-              {cart.length === 0 ? (
+              {cartLoading || cartError ? <div className="empty" role="status"><p>{cartLoading ? "Loading your cart…" : cartError}</p>{cartError && <button onClick={refreshCart}>Retry</button>}</div> : cart.length === 0 ? (
                 <div className="empty">
                   <div className="empty-icon" style={{ opacity: 0.1 }}>
                     <IconCart width={64} height={64} />
@@ -124,6 +128,7 @@ export default function Layout({ children }) {
                       <div className="cart-ctrls">
                         <button
                           className="qty-btn"
+                          disabled={cartBusy}
                           onClick={() => updateCartItem(item.id, item.quantite - 1)}
                         >
                           −
@@ -131,12 +136,14 @@ export default function Layout({ children }) {
                         <span className="qty-n">{item.quantite}</span>
                         <button
                           className="qty-btn"
+                          disabled={cartBusy}
                           onClick={() => updateCartItem(item.id, item.quantite + 1)}
                         >
                           +
                         </button>
                         <button
                           className="del-btn"
+                          disabled={cartBusy}
                           onClick={() => removeFromCart(item.id)}
                         >
                           ✕
@@ -155,6 +162,7 @@ export default function Layout({ children }) {
                 </div>
                 <button
                   className="checkout-btn"
+                  disabled={cartLoading || cartBusy || Boolean(cartError)}
                   onClick={handleCheckout}
                 >
                   {user

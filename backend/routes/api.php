@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\CategorieController;
 use App\Http\Controllers\API\CommandeController;
 use App\Http\Controllers\API\ProduitController;
@@ -39,6 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'me']);
+
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart/items', [CartController::class, 'store']);
+    Route::patch('/cart/items/{product}', [CartController::class, 'update'])->whereNumber('product');
+    Route::delete('/cart/items/{product}', [CartController::class, 'destroy'])->whereNumber('product');
 
     // Orders — clients can place and view their own orders
     Route::get('/orders', [CommandeController::class, 'index']);

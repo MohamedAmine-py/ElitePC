@@ -6,7 +6,7 @@ import { applyProductFallback, productImage } from "../utils/productAssets";
 import { formatCurrency } from "../utils/currency";
 
 export default function Checkout() {
-  const { cart, cartTotal, user, token, toast, clearCart, setAuthOpen } = useApp();
+  const { cart, cartTotal, cartLoading, cartBusy, cartError, refreshCart, user, token, toast, setAuthOpen } = useApp();
   const [formData, setFormData] = useState({ payment_method: "credit_card", delivery_address: "", delivery_phone: "" });
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
@@ -26,6 +26,7 @@ export default function Checkout() {
 
   const handlePlaceOrder = async (event) => {
     event.preventDefault();
+    if (loading || cartLoading || cartBusy || cartError || !token) return;
     const validationError = validate();
     if (validationError) {
       setFormError(validationError);
@@ -37,20 +38,22 @@ export default function Checkout() {
     setLoading(true);
     try {
       const order = await createOrder({
-        items: cart.map((item) => ({ produit_id: item.id, quantite: item.quantite })),
+        items: cart.map((item) => ({ produit_id: item.id, quantite: item.quantite, cart_item_id: item.cart_item_id, cart_updated_at: item.cart_updated_at })),
         payment_method: formData.payment_method,
         delivery_address: formData.delivery_address.trim(),
         delivery_phone: formData.delivery_phone.trim(),
       }, token);
 
+      if (localStorage.getItem("token") !== token) return;
       if (order?.id) {
-        setCreatedOrder(order);
-        clearCart();
+        setCreatedOrder({ ...order, owner: token });
+        void refreshCart();
         toast("Order created successfully.", "success");
       } else {
         setFormError(order?.message || "The order could not be created.");
       }
     } catch (error) {
+      if (localStorage.getItem("token") !== token) return;
       const validationMessages = error.data?.errors ? Object.values(error.data.errors).flat().join(" ") : "";
       const message = validationMessages || error.message || "An error occurred while placing the order.";
       setFormError(message);
@@ -64,8 +67,12 @@ export default function Checkout() {
     return <main className="checkout-page storefront-container"><div className="store-state"><div className="store-state-mark">ID</div><h3>Sign in to place your order</h3><p>Your cart remains saved while you sign in.</p><button className="button button-primary" onClick={() => setAuthOpen(true)}>Sign In</button></div></main>;
   }
 
-  if (createdOrder) {
+  if (createdOrder?.owner === token) {
     return <main className="checkout-page storefront-container"><div className="checkout-success"><span aria-hidden="true">✓</span><div className="store-eyebrow">Order confirmed</div><h1>Thank you for your order.</h1><p>Order #{createdOrder.id} was created. Its confirmed total is <strong>{formatCurrency(createdOrder.total)}</strong>.</p><Link className="button button-primary" to="/orders">View My Orders</Link></div></main>;
+  }
+
+  if (cartLoading || cartError) {
+    return <main className="checkout-page storefront-container"><div className="store-state" role="status"><p>{cartLoading ? "Loading your cart…" : cartError}</p>{cartError && <button className="button button-primary" onClick={refreshCart}>Retry</button>}</div></main>;
   }
 
   if (cart.length === 0) {
@@ -102,7 +109,7 @@ export default function Checkout() {
           <div className="summary-row"><span>Shipping</span><strong>Confirmed at checkout</strong></div>
           <div className="summary-total"><span>Estimated total</span><strong>{formatCurrency(cartTotal)}</strong></div>
           <p className="summary-note">The server verifies prices and stock before creating the order.</p>
-          <button type="submit" className="button button-primary checkout-submit" disabled={loading}>{loading ? "Creating order…" : "Place Order"} <span>→</span></button>
+          <button type="submit" className="button button-primary checkout-submit" disabled={loading || cartBusy}>{loading ? "Creating order…" : "Place Order"} <span>→</span></button>
           <Link className="summary-continue" to="/cart">← Back to Cart</Link>
         </aside>
       </form>
