@@ -34,8 +34,8 @@ class Produit extends Model
 
     protected $casts = [
         'is_custom_build' => 'boolean',
-        'prix'            => 'float',
-        'stock'           => 'integer',
+        'prix' => 'float',
+        'stock' => 'integer',
     ];
 
     // Each product belongs to one category
@@ -48,5 +48,10 @@ class Produit extends Model
     public function detailsCommandes()
     {
         return $this->hasMany(DetailCommande::class, 'produit_id');
+    }
+
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class, 'produit_id');
     }
 }
