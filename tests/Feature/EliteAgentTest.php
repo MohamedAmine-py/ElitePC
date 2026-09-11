@@ -81,11 +81,11 @@ class EliteAgentTest extends TestCase
         }
     }
 
-    public function test_registry_exposes_only_search_and_rejects_unsupported_actions(): void
+    public function test_registry_exposes_only_intended_read_tools_and_rejects_unsupported_actions(): void
     {
         $registry = app(ToolRegistry::class);
         $definitions = $registry->definitions()[0]->toArray()['functionDeclarations'];
-        $this->assertSame(['search_products'], array_column($definitions, 'name'));
+        $this->assertSame(['search_products', 'get_product_details', 'get_categories', 'check_stock', 'compare_products', 'check_compatibility'], array_column($definitions, 'name'));
         foreach (['delete_product', 'create_order', 'add_to_cart', 'favorites', 'shell', 'sql'] as $name) {
             try {
                 $registry->resolve($name);
@@ -103,7 +103,7 @@ class EliteAgentTest extends TestCase
         $transport = Mockery::mock(GeminiTransport::class);
         $transport->shouldReceive('generate')->once()->ordered()->withArgs(function ($model, $system, $contents, $tools) {
             $this->assertSame(GeminiTransport::MODELS[0], $model);
-            $this->assertStringContainsString('ONLY capability is read-only', $system);
+            $this->assertStringContainsString('Your capabilities are read-only', $system);
             $this->assertCount(1, $tools);
 
             return true;

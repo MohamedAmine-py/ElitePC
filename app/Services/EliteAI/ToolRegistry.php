@@ -3,6 +3,11 @@
 namespace App\Services\EliteAI;
 
 use App\Services\EliteAI\Contracts\AgentTool;
+use App\Services\EliteAI\Tools\CheckCompatibilityTool;
+use App\Services\EliteAI\Tools\CheckStockTool;
+use App\Services\EliteAI\Tools\CompareProductsTool;
+use App\Services\EliteAI\Tools\GetCategoriesTool;
+use App\Services\EliteAI\Tools\GetProductDetailsTool;
 use App\Services\EliteAI\Tools\SearchProductsTool;
 use Gemini\Data\FunctionDeclaration;
 use Gemini\Data\Tool;
@@ -13,9 +18,18 @@ class ToolRegistry
     /** @var array<string, AgentTool> Explicit server-owned allowlist. */
     private array $tools;
 
-    public function __construct(SearchProductsTool $search)
-    {
-        $this->tools = [$search->name() => $search];
+    public function __construct(
+        SearchProductsTool $search,
+        GetProductDetailsTool $details,
+        GetCategoriesTool $categories,
+        CheckStockTool $stock,
+        CompareProductsTool $compare,
+        CheckCompatibilityTool $compatibility,
+    ) {
+        $this->tools = [];
+        foreach ([$search, $details, $categories, $stock, $compare, $compatibility] as $tool) {
+            $this->tools[$tool->name()] = $tool;
+        }
     }
 
     public function resolve(string $name): AgentTool
