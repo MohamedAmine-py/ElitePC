@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import useApp from "../context/useApp";
 import { sendSupportMessage } from "../api/client";
 import { buildSupportHistory } from "../utils/chatHistory";
+import AssistantMarkdown from "./AssistantMarkdown";
 import { BrandMark } from "./BrandLogo";
 import "../styles/SupportChat.css";
 
@@ -116,70 +117,6 @@ function ScopedSupportChat() {
     }
   };
 
-  // Safe and clean custom React markdown rendering helper
-  const renderFormattedContent = (text) => {
-    if (!text) return "";
-    
-    // Split text by double newlines for paragraph breaks
-    const paragraphs = text.split(/\n\n+/);
-    
-    return paragraphs.map((para, idx) => {
-      const trimmedPara = para.trim();
-      
-      // Render bullet list items
-      if (trimmedPara.startsWith("- ") || trimmedPara.startsWith("* ")) {
-        const items = trimmedPara.split(/\n[-*]\s+/);
-        items[0] = items[0].replace(/^[-*]\s+/, "");
-        return (
-          <ul key={idx} className="support-chat-list">
-            {items.map((item, itemIdx) => (
-              <li key={itemIdx}>{parseInlineStyles(item)}</li>
-            ))}
-          </ul>
-        );
-      }
-      
-      // Render numbered list items
-      if (/^\d+\.\s+/.test(trimmedPara)) {
-        const items = trimmedPara.split(/\n\d+\.\s+/);
-        items[0] = items[0].replace(/^\d+\.\s+/, "");
-        return (
-          <ol key={idx} className="support-chat-list">
-            {items.map((item, itemIdx) => (
-              <li key={itemIdx}>{parseInlineStyles(item)}</li>
-            ))}
-          </ol>
-        );
-      }
-      
-      // Render default paragraph
-      return (
-        <p key={idx} style={{ marginBottom: idx === paragraphs.length - 1 ? 0 : "8px" }}>
-          {parseInlineStyles(trimmedPara)}
-        </p>
-      );
-    });
-  };
-
-  // Helper to parse **bold** and handle internal line breaks safely in React elements
-  const parseInlineStyles = (text) => {
-    const parts = text.split(/(\*\*.*?\*\*)/g);
-    return parts.map((part, idx) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={idx}>{part.slice(2, -2)}</strong>;
-      }
-      
-      // Split single newlines to output <br /> tags
-      const sublines = part.split("\n");
-      return sublines.map((line, lineIdx) => (
-        <span key={lineIdx}>
-          {line}
-          {lineIdx < sublines.length - 1 && <br />}
-        </span>
-      ));
-    });
-  };
-
   return (
     <>
       {/* Floating Chat Bubble Launcher */}
@@ -226,7 +163,7 @@ function ScopedSupportChat() {
               <div key={index} className={`support-chat-message-row ${msg.role}`}>
                 <div className={`support-chat-bubble ${msg.state === "error" ? "is-error" : ""}`} role={msg.state === "error" ? "alert" : undefined}>
                   <span className="support-chat-message-label">{msg.role === "assistant" ? "Elite AI" : "You"}</span>
-                  {renderFormattedContent(msg.content)}
+                  {msg.role === "assistant" ? <AssistantMarkdown content={msg.content} /> : <p className="support-chat-user-text">{msg.content}</p>}
                 </div>
               </div>
             ))}

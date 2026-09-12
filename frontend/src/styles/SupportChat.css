@@ -125,3 +125,40 @@
 .support-chat-bubble { border-radius: 3px; border-color: #2b2b2b; background: #151515; }
 .support-chat-message-row.user .support-chat-bubble { border-color: color-mix(in srgb, var(--accent) 55%, #292929); background: color-mix(in srgb, var(--accent) 10%, #111); }
 .support-chat-send-btn:hover:not(:disabled) { background: #fff; border-color: #fff; color: #090909; }
+
+/* Markdown stays inside the existing message surface, including wide tables/code. */
+.support-chat-history { min-height: 0; min-width: 0; }
+.support-chat-message-row, .support-chat-bubble { min-width: 0; }
+.support-chat-bubble { overflow-wrap: anywhere; }
+.support-chat-user-text { white-space: pre-wrap; }
+.support-chat-markdown { min-width: 0; }
+.support-chat-markdown > * + * { margin-top: 10px; }
+.support-chat-markdown > :first-child { margin-top: 0; }
+.support-chat-markdown > :last-child { margin-bottom: 0; }
+.support-chat-markdown p { margin-bottom: 10px; }
+.support-chat-markdown :is(h1, h2, h3, h4, h5, h6) { margin: 14px 0 8px; color: #f1f5f7; font-weight: 700; line-height: 1.35; }
+.support-chat-markdown h1 { font-size: 19px; }
+.support-chat-markdown h2 { font-size: 17px; }
+.support-chat-markdown h3 { font-size: 15px; }
+.support-chat-markdown :is(h4, h5, h6) { font-size: 13px; }
+.support-chat-markdown :is(ul, ol) { margin: 8px 0; padding-left: 20px; }
+.support-chat-markdown ul { list-style: disc; }
+.support-chat-markdown ol { list-style: decimal; }
+.support-chat-markdown li { margin: 4px 0; padding-left: 2px; }
+.support-chat-markdown li > p { margin-bottom: 4px; }
+.support-chat-markdown li :is(ul, ol) { margin: 4px 0; }
+.support-chat-markdown a { color: #f0b2b0; text-decoration: underline; text-underline-offset: 3px; }
+.support-chat-markdown a:hover { color: #fff; }
+.support-chat-markdown a:focus-visible, .support-chat-table-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.support-chat-markdown code { padding: 1px 4px; border: 1px solid #353535; border-radius: 2px; background: #202020; color: #e5e5e5; font: .92em/1.5 'JetBrains Mono', monospace; }
+.support-chat-markdown pre { max-width: 100%; overflow-x: auto; padding: 10px; border: 1px solid #333; border-radius: 2px; background: #0d0d0d; white-space: pre; overflow-wrap: normal; }
+.support-chat-markdown pre code { padding: 0; border: 0; background: none; color: inherit; }
+.support-chat-markdown blockquote { margin: 10px 0; padding-left: 10px; border-left: 2px solid #555; color: #aeb6bd; }
+.support-chat-markdown hr { margin: 12px 0; border: 0; border-top: 1px solid #333; }
+.support-chat-table-scroll { max-width: 100%; overflow-x: auto; border: 1px solid #353535; scrollbar-width: thin; scrollbar-color: #555 #151515; }
+.support-chat-markdown table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 11px; line-height: 1.5; }
+.support-chat-markdown :is(th, td) { min-width: 100px; max-width: 240px; padding: 8px 10px; border-right: 1px solid #333; border-bottom: 1px solid #333; text-align: left; vertical-align: top; overflow-wrap: normal; }
+.support-chat-markdown th { background: #222; color: #f1f5f7; font-weight: 700; }
+.support-chat-markdown td { background: #151515; color: #c6cfd7; }
+.support-chat-markdown tr:last-child td { border-bottom: 0; }
+.support-chat-markdown :is(th, td):last-child { border-right: 0; }
