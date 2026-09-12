@@ -12,6 +12,6 @@ interface AgentTool
 
     public function schema(): Schema;
 
-    /** Public read-only execution. Future private tools extend AuthenticatedAgentTool. */
+    /** Public read-only catalog execution. */
     public function execute(array $arguments): array;
 }

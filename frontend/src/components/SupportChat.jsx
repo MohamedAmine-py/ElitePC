@@ -23,10 +23,10 @@ const IconSend = () => (
 export default function SupportChat() {
   const { token } = useApp();
   // A new authentication scope remounts all history, drafts, loading and error state.
-  return <ScopedSupportChat key={token || "guest"} token={token} />;
+  return <ScopedSupportChat key={token || "guest"} />;
 }
 
-function ScopedSupportChat({ token }) {
+function ScopedSupportChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -84,7 +84,7 @@ function ScopedSupportChat({ token }) {
       const formattedHistory = buildSupportHistory(messages);
 
       // Call our Laravel API endpoint
-      const response = await sendSupportMessage(userQuery, formattedHistory, token, crypto.randomUUID(), request.signal);
+      const response = await sendSupportMessage(userQuery, formattedHistory, request.signal);
       if (!activeRef.current) return;
 
       if (response && response.status === "success") {

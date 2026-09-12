@@ -60,5 +60,5 @@ export const downloadInvoice = async (id, token) => {
 export const createCategory = (data, token) => apiCall("POST", "/categories", data, token);
 export const updateCategory = (id, data, token) => apiCall("PUT", `/categories/${id}`, data, token);
 export const deleteCategory = (id, token) => apiCall("DELETE", `/categories/${id}`, null, token);
-export const sendSupportMessage = (message, history, token = null, requestId = crypto.randomUUID(), signal) =>
-  apiCall("POST", "/support/chat", { message, history }, token, { headers: { "X-Chat-Request-ID": requestId }, signal });
+export const sendSupportMessage = (message, history, signal) =>
+  apiCall("POST", "/support/chat", { message, history }, null, { signal });

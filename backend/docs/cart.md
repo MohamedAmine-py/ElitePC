@@ -43,6 +43,6 @@ Older API clients can still submit IDs/quantities without the optional snapshot 
 - Four concurrent MySQL adds increased the dedicated B cart from 1 to 5 with no stock change; it was restored to quantity 1.
 - A delayed real cart response was held across A logout/B login in the same SPA and did not overwrite B's cart.
 
-## Before future AI mutation tools
+## Checkout retries
 
-This phase does not add mutation idempotency keys or change chat authentication. Before AI cart writes, resolve Sanctum identity server-side and prevent duplicate incremental adds when a model/provider/request retries. Never let the model choose `user_id`. Keep favorites, order actions, and checkout outside that future cart-tool scope. Browser checkout itself also retains its existing non-idempotent order endpoint; a lost success response must not be blindly resubmitted.
+Browser checkout retains its existing non-idempotent order endpoint; a lost success response must not be blindly resubmitted.

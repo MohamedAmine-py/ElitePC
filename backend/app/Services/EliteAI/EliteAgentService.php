@@ -6,9 +6,8 @@ use Gemini\Data\Content;
 use Gemini\Data\FunctionResponse;
 use Gemini\Data\Part;
 use Gemini\Enums\Role;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -20,19 +19,15 @@ class EliteAgentService
 
     public const MAX_REQUESTS = 10;
 
-    public function __construct(private ToolRegistry $registry, private GeminiTransport $transport, private ToolExecutor $executor = new ToolExecutor) {}
+    public function __construct(private ToolRegistry $registry, private GeminiTransport $transport) {}
 
-    public function reply(string $message, array $history = [], ?AgentContext $context = null): string
+    public function reply(string $message, array $history = []): string
     {
         $initial = ChatHistory::contents($message, $history);
-        $context ??= new AgentContext;
-        $trace = $context->executionId;
+        $trace = (string) Str::uuid();
         $toolCalls = 0;
         $requests = 0;
         foreach (GeminiTransport::MODELS as $model) {
-            if ($model !== GeminiTransport::MODELS[0]) {
-                $context->mutations->onFallback();
-            }
             // Signatures belong to a model: never replay them to a different fallback model.
             $contents = $initial;
             while ($requests < self::MAX_REQUESTS) {
@@ -70,7 +65,7 @@ class EliteAgentService
                         throw new RuntimeException('Unavailable assistant capability.');
                     }
                     try {
-                        $result = $this->executor->execute($tool, $call->args, $context, $call->id);
+                        $result = $tool->execute($call->args);
                         $products = $result['products'] ?? $result['known_facts'] ?? (isset($result['product']) ? [$result['product']] : []);
                         Log::info('Elite AI tool executed.', [
                             'trace_id' => $trace, 'tool' => $tool->name(),
@@ -81,9 +76,6 @@ class EliteAgentService
                             'returned_count' => $result['returned_count'] ?? count($products),
                             'result_status' => $result['status'] ?? 'ok',
                         ]);
-                    } catch (AuthenticationException|AuthorizationException) {
-                        $result = ['error' => 'This capability requires authorization for the current account.'];
-                        Log::notice('Elite AI private tool access rejected.', ['trace_id' => $trace, 'tool' => $tool->name()]);
                     } catch (ValidationException) {
                         $result = ['error' => 'Invalid arguments. Use only the declared parameters with their required types, ranges and distinct product IDs.'];
                         Log::notice('Elite AI tool arguments rejected.', ['trace_id' => $trace, 'tool' => $tool->name()]);
@@ -107,7 +99,8 @@ The ElitePC database is the only source of truth for current products, prices, s
 You MUST use the appropriate registered product tool whenever current catalog information is needed, including follow-ups. Never invent products, prices, stock, specs or compatibility, and never treat conversation history as live inventory.
 Quote exact returned prices in USD ($), without conversion, rounding or estimation. Describe stock exactly. Missing specs are unknown: do not infer compatibility from absent dimensions, sockets or wattage.
 General hardware explanations are allowed, but separate general knowledge from verified ElitePC product claims.
-Your capabilities are read-only product discovery, inspection, category browsing, stock checking, comparisons and conservative compatibility evaluation. You cannot place or cancel orders, track shipments, modify carts, favorites or accounts, delete products, or perform admin actions. Respond naturally: "I can't modify store data, but I can help you search, inspect, compare, and evaluate products." Never claim an action was performed.
+Your catalog capabilities are product discovery, inspection, category browsing, stock checking, comparisons and conservative compatibility evaluation.
+Elite AI is READ ONLY. You cannot modify carts, favorites, orders, checkout, payments, users, admin data, or any other application state, or access private customer data. Never claim to perform such actions. Explain this limitation and offer help finding, inspecting, comparing, or evaluating catalog products.
 Use search_products for discovery/filtering and to resolve unknown product IDs. Never guess an ID or choose arbitrarily between ambiguous matches; ask for clarification if needed.
 Product names supplied by customers are enough to begin: search for them yourself, never ask the customer for an internal product ID. Search is a literal substring, NOT semantic or token matching. Prefer a short distinctive name fragment; if no match, retry a shorter fragment before claiming a product is unavailable. Resolve ambiguity using the requested model/specs from returned facts, or ask the customer if it remains unresolved.
 Use get_categories for category questions, including exact category names before category filtering when unknown.
