@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\EliteAI\ChatHistory;
 use App\Services\EliteAI\EliteAgentService;
 use App\Services\EliteAI\GeminiTransport;
+use App\Services\EliteAI\KnowledgeRetriever;
 use App\Services\EliteAI\ToolRegistry;
 use App\Services\EliteAI\Tools\SearchProductsTool;
 use Gemini\Data\Content;
@@ -117,7 +118,7 @@ class EliteAgentTest extends TestCase
 
             return true;
         })->andReturn(Content::parse('Budget GPU costs $599.99.', Role::MODEL));
-        $agent = new EliteAgentService(app(ToolRegistry::class), $transport);
+        $agent = new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class));
         $this->assertSame('Budget GPU costs $599.99.', $agent->reply('Show products under $1000'));
     }
 
@@ -125,7 +126,7 @@ class EliteAgentTest extends TestCase
     {
         $transport = Mockery::mock(GeminiTransport::class);
         $transport->shouldReceive('generate')->times(6)->andReturn($this->toolCall());
-        $agent = new EliteAgentService(app(ToolRegistry::class), $transport);
+        $agent = new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class));
         $this->expectExceptionMessage('AI search limit reached.');
         $agent->reply('Keep searching');
     }
@@ -138,7 +139,7 @@ class EliteAgentTest extends TestCase
         $transport = Mockery::mock(GeminiTransport::class);
         $transport->shouldReceive('generate')->once()->andReturn(new Content(array_fill(0, 6, $this->toolCall()->parts[0]), Role::MODEL));
         $this->expectExceptionMessage('AI search limit reached.');
-        (new EliteAgentService($registry, $transport))->reply('Search');
+        (new EliteAgentService($registry, $transport, app(KnowledgeRetriever::class)))->reply('Search');
     }
 
     public function test_bad_arguments_can_be_corrected_without_leaking_validation_details(): void
@@ -153,7 +154,7 @@ class EliteAgentTest extends TestCase
             return true;
         })->andReturn($this->toolCall(['max_price' => 1000]));
         $transport->shouldReceive('generate')->once()->ordered()->andReturn(Content::parse('No products match.', Role::MODEL));
-        $this->assertSame('No products match.', (new EliteAgentService(app(ToolRegistry::class), $transport))->reply('Search'));
+        $this->assertSame('No products match.', (new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class)))->reply('Search'));
     }
 
     public function test_history_is_bounded_and_thoughts_are_not_returned(): void
@@ -198,7 +199,7 @@ class EliteAgentTest extends TestCase
             return true;
         })->andReturn(new Content(array_fill(0, 5, $this->toolCall()->parts[0]), Role::MODEL));
         $this->expectExceptionMessage('AI search limit reached.');
-        (new EliteAgentService(app(ToolRegistry::class), $transport))->reply('Search');
+        (new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class)))->reply('Search');
     }
 
     public function test_tool_execution_failure_is_safe(): void

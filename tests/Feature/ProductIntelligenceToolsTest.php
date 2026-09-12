@@ -6,6 +6,7 @@ use App\Models\Categorie;
 use App\Models\Produit;
 use App\Services\EliteAI\EliteAgentService;
 use App\Services\EliteAI\GeminiTransport;
+use App\Services\EliteAI\KnowledgeRetriever;
 use App\Services\EliteAI\ToolRegistry;
 use App\Services\EliteAI\Tools\CheckCompatibilityTool;
 use App\Services\EliteAI\Tools\CheckStockTool;
@@ -217,7 +218,7 @@ class ProductIntelligenceToolsTest extends TestCase
 
             return true;
         })->andReturn(Content::parse('Nova has 15 units in stock.', Role::MODEL));
-        $this->assertSame('Nova has 15 units in stock.', (new EliteAgentService(app(ToolRegistry::class), $transport))->reply('How many Nova units are in stock?'));
+        $this->assertSame('Nova has 15 units in stock.', (new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class)))->reply('How many Nova units are in stock?'));
     }
 
     public function test_compatibility_prompt_returns_insufficient_evidence_through_the_agent(): void
@@ -232,7 +233,7 @@ class ProductIntelligenceToolsTest extends TestCase
 
             return true;
         })->andReturn(Content::parse("I don't have enough catalog data to confirm that compatibility.", Role::MODEL));
-        $this->assertSame("I don't have enough catalog data to confirm that compatibility.", (new EliteAgentService(app(ToolRegistry::class), $transport))->reply('Is this RAM compatible with this motherboard?'));
+        $this->assertSame("I don't have enough catalog data to confirm that compatibility.", (new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class)))->reply('Is this RAM compatible with this motherboard?'));
     }
 
     public function test_registered_schemas_declare_required_ids_and_array_bounds(): void
