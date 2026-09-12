@@ -4,7 +4,7 @@ import useApp from "../context/useApp";
 import ProductCard from "../components/ProductCard";
 
 export default function Favorites() {
-  const { favorites } = useApp();
+  const { favorites, favoritesLoading, favoritesBusy, favoritesError, refreshFavorites } = useApp();
 
   return (
     <main className="favorites-page storefront-container">
@@ -13,7 +13,12 @@ export default function Favorites() {
         <span className="result-count">{favorites.length} product{favorites.length !== 1 ? "s" : ""}</span>
       </header>
 
-      {favorites.length === 0 ? (
+      {favoritesLoading || favoritesError ? (
+        <div className="store-state" role="status">
+          <p>{favoritesLoading ? "Loading your favorites…" : favoritesError}</p>
+          {favoritesError && <button className="button button-primary" disabled={favoritesBusy} onClick={refreshFavorites}>Retry</button>}
+        </div>
+      ) : favorites.length === 0 ? (
         <div className="favorites-empty store-state">
           <div className="wishlist-heart" aria-hidden="true">♡</div>
           <h3>Your selection is empty</h3>

@@ -12,7 +12,7 @@ const HeartIcon = ({ filled }) => (
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const { favorites, toggleFavorite, addToCart } = useApp();
+  const { favorites, favoritesLoading, favoritesBusy, favoritesError, toggleFavorite, addToCart } = useApp();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,7 +60,7 @@ export default function ProductDetails() {
           <div className="product-detail-price"><span>Price</span><strong>{formatCurrency(product.prix)}</strong></div>
           <div className="product-detail-actions">
             <button className="button button-primary detail-cart-button" disabled={isOut} onClick={() => addToCart(product)}>{isOut ? "Unavailable" : "Add to Cart"}</button>
-            <button className={`detail-favorite-button ${isFavorite ? "is-active" : ""}`} onClick={() => toggleFavorite(product)} aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}><HeartIcon filled={isFavorite} /><span>{isFavorite ? "In your favorites" : "Add to favorites"}</span></button>
+            <button className={`detail-favorite-button ${isFavorite ? "is-active" : ""}`} disabled={favoritesLoading || favoritesBusy || Boolean(favoritesError)} aria-pressed={isFavorite} onClick={() => toggleFavorite(product)} aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}><HeartIcon filled={isFavorite} /><span>{isFavorite ? "In your favorites" : "Add to favorites"}</span></button>
           </div>
         </div>
       </section>
