@@ -1,8 +1,8 @@
 const BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
-export async function apiCall(method, endpoint, body = null, token = null) {
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+export async function apiCall(method, endpoint, body = null, token = null, options = {}) {
+  const headers = { "Content-Type": "application/json", Accept: "application/json", ...options.headers };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(BASE + endpoint, { method, headers, body: body ? JSON.stringify(body) : null });
+  const res = await fetch(BASE + endpoint, { method, headers, body: body ? JSON.stringify(body) : null, signal: options.signal });
   const contentType = res.headers.get("content-type") || "";
   const data = contentType.includes("application/json") ? await res.json() : null;
 
@@ -60,4 +60,5 @@ export const downloadInvoice = async (id, token) => {
 export const createCategory = (data, token) => apiCall("POST", "/categories", data, token);
 export const updateCategory = (id, data, token) => apiCall("PUT", `/categories/${id}`, data, token);
 export const deleteCategory = (id, token) => apiCall("DELETE", `/categories/${id}`, null, token);
-export const sendSupportMessage = (message, history) => apiCall("POST", "/support/chat", { message, history });
+export const sendSupportMessage = (message, history, token = null, requestId = crypto.randomUUID(), signal) =>
+  apiCall("POST", "/support/chat", { message, history }, token, { headers: { "X-Chat-Request-ID": requestId }, signal });

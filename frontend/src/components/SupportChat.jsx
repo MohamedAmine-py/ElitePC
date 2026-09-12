@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import useApp from "../context/useApp";
 import { sendSupportMessage } from "../api/client";
 import { buildSupportHistory } from "../utils/chatHistory";
 import { BrandMark } from "./BrandLogo";
@@ -20,6 +21,12 @@ const IconSend = () => (
 );
 
 export default function SupportChat() {
+  const { token } = useApp();
+  // A new authentication scope remounts all history, drafts, loading and error state.
+  return <ScopedSupportChat key={token || "guest"} token={token} />;
+}
+
+function ScopedSupportChat({ token }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -33,6 +40,16 @@ export default function SupportChat() {
   const [hasError, setHasError] = useState(false);
 
   const historyEndRef = useRef(null);
+  const activeRef = useRef(true);
+  const requestRef = useRef(null);
+
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+      requestRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const openAssistant = () => setIsOpen(true);
@@ -49,7 +66,9 @@ export default function SupportChat() {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || requestRef.current) return;
+    const request = new AbortController();
+    requestRef.current = request;
 
     const userQuery = input.trim();
     setInput("");
@@ -65,7 +84,8 @@ export default function SupportChat() {
       const formattedHistory = buildSupportHistory(messages);
 
       // Call our Laravel API endpoint
-      const response = await sendSupportMessage(userQuery, formattedHistory);
+      const response = await sendSupportMessage(userQuery, formattedHistory, token, crypto.randomUUID(), request.signal);
+      if (!activeRef.current) return;
 
       if (response && response.status === "success") {
         setMessages(prev => [...prev, { role: "assistant", content: response.reply }]);
@@ -80,8 +100,8 @@ export default function SupportChat() {
           state: "error"
         }]);
       }
-    } catch (error) {
-      console.error("Support Chat API Error:", error);
+    } catch {
+      if (!activeRef.current) return;
       setHasError(true);
       setMessages(prev => [...prev, { 
         role: "assistant", 
@@ -89,7 +109,10 @@ export default function SupportChat() {
         state: "error"
       }]);
     } finally {
-      setIsLoading(false);
+      if (activeRef.current) {
+        requestRef.current = null;
+        setIsLoading(false);
+      }
     }
   };
 

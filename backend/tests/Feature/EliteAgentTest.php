@@ -16,16 +16,16 @@ use Gemini\Enums\Role;
 use Gemini\Laravel\Facades\Gemini;
 use Gemini\Resources\GenerativeModel;
 use Gemini\Responses\GenerativeModel\GenerateContentResponse;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Mockery;
 use RuntimeException;
+use Tests\Concerns\UsesChatTestDatabase;
 use Tests\TestCase;
 
 class EliteAgentTest extends TestCase
 {
-    use RefreshDatabase;
+    use UsesChatTestDatabase;
 
     private function product(string $name, float $price, int $stock = 3): Produit
     {
