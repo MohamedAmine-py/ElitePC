@@ -1,12 +1,18 @@
-# Elite AI read-only agent foundation
+# Elite AI read-only catalog assistant
 
-The existing `POST /api/support/chat` request (`message`, recent `history`) and response (`status`, `reply`, optional safe `error`) are unchanged. React is unchanged. The server still enforces the existing chat rate limit.
+Elite AI is a public, read-only shopping assistant. The production registry contains exactly six tools: `search_products`, `get_product_details`, `get_categories`, `check_stock`, `compare_products`, and `check_compatibility`. It cannot modify application state or access private customer information.
+
+`POST /api/support/chat` accepts `message` and recent `history` and returns `status`, `reply`, and an optional safe `error`. It retains the existing IP rate limit and input validation. Chat does not resolve an authenticated user, forward account identity to Gemini, or reserve/cache execution results. Each request runs independently.
+
+The frontend sends no bearer token or execution correlation headers to chat and does not refresh cart/favorites after a chat response. Transcript and draft state still reset on account/session changes for local privacy. Cancellation, duplicate-send protection, bounded history, and guards against late responses remain.
+
+Normal authenticated cart/favorites APIs, guest localStorage collections, and checkout cleanup remain separate and unchanged. The existing legacy RAG mode remains available; this cleanup does not change retrieval.
 
 ## Flow
 
 `SupportChatRequest -> SupportChatController -> EliteAgentService -> GeminiTransport`
 
-Gemini receives the system instruction, at most 10 history messages, the new user message, and six native function declarations. A `functionCall` is resolved through the explicit `ToolRegistry`. Each dedicated tool validates arguments before querying the public product/category data it needs. Laravel appends the full model content (including thought signatures), then a native `functionResponse` with the matching call ID. Gemini can search again or return a final answer. No arbitrary JSON parsing is used to simulate tool calls.
+Gemini receives the system instruction, at most 10 history messages, the new user message, and six native function declarations. A `functionCall` is resolved through the explicit `ToolRegistry`. The agent calls the resolved public tool directly through execute(arguments). Each dedicated tool validates arguments before querying the public product/category data it needs. Laravel appends the full model content (including thought signatures), then a native `functionResponse` with the matching call ID. Gemini can search again or return a final answer. No arbitrary JSON parsing is used to simulate tool calls.
 
 The existing four-model fallback order and `gemini.api_key`, `gemini.base_url`, `gemini.request_timeout` SDK configuration are retained. A fallback starts from the original bounded conversation, never another model's signed tool transcript. There are at most 5 total tool calls (including invalid and parallel calls) and 10 total generation attempts per request, including fallbacks. Generation output is bounded to 2048 tokens. Truncated/blocked/empty responses fail safely. HTTP calls retain the configured per-request timeout.
 

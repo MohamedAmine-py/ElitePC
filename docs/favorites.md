@@ -62,8 +62,8 @@ Modified:
 - Additional browser checks passed for unchanged legacy/account localStorage, API load failure and Retry, failed removal retaining the server favorite, and a delayed A response released after B login. No browser JavaScript errors were observed.
 - Dedicated test customers 5 and 6 were retained with product 2 and product 3 favorited respectively. No orders were placed or stock changed by acceptance checks. Browser output is in the ignored `backend/output/favorites-acceptance-results.json`.
 
-## Before Phase C
+## Behavior notes
 
-No AI mutation tools were added. A future integration must resolve Sanctum identity server-side and pass that User to FavoriteService; it must never trust a model-selected owner. Favorites additions/removals already have idempotent semantics. Updates are refreshed on the events above, not pushed live across devices.
+Favorites additions/removals already have idempotent semantics. Updates are refreshed on the events above, not pushed live across devices.
 
 Cart, checkout, order logic, Elite AI, and UI styling were not changed.

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Categorie;
 use App\Models\Produit;
+use App\Models\User;
 use App\Services\EliteAI\ChatHistory;
 use App\Services\EliteAI\EliteAgentService;
 use App\Services\EliteAI\GeminiTransport;
@@ -81,12 +82,12 @@ class EliteAgentTest extends TestCase
         }
     }
 
-    public function test_registry_exposes_only_intended_read_tools_and_rejects_unsupported_actions(): void
+    public function test_registry_exposes_only_intended_tools_and_rejects_unsupported_actions(): void
     {
         $registry = app(ToolRegistry::class);
         $definitions = $registry->definitions()[0]->toArray()['functionDeclarations'];
         $this->assertSame(['search_products', 'get_product_details', 'get_categories', 'check_stock', 'compare_products', 'check_compatibility'], array_column($definitions, 'name'));
-        foreach (['delete_product', 'create_order', 'add_to_cart', 'favorites', 'shell', 'sql'] as $name) {
+        foreach (['set_cart_quantity', 'remove_from_cart', 'add_favorite', 'remove_favorite', 'delete_product', 'create_order', 'add_to_cart', 'favorites', 'shell', 'sql'] as $name) {
             try {
                 $registry->resolve($name);
                 $this->fail('Unknown tool resolved.');
@@ -103,7 +104,7 @@ class EliteAgentTest extends TestCase
         $transport = Mockery::mock(GeminiTransport::class);
         $transport->shouldReceive('generate')->once()->ordered()->withArgs(function ($model, $system, $contents, $tools) {
             $this->assertSame(GeminiTransport::MODELS[0], $model);
-            $this->assertStringContainsString('Your capabilities are read-only', $system);
+            $this->assertStringContainsString('Elite AI is READ ONLY', $system);
             $this->assertCount(1, $tools);
 
             return true;
@@ -200,7 +201,7 @@ class EliteAgentTest extends TestCase
         (new EliteAgentService(app(ToolRegistry::class), $transport))->reply('Search');
     }
 
-    public function test_tool_execution_failure_is_safe_and_not_retried_as_a_write(): void
+    public function test_tool_execution_failure_is_safe(): void
     {
         config(['elite_ai.agent_enabled' => true, 'app.debug' => true]);
         $tool = Mockery::mock(SearchProductsTool::class)->makePartial();
@@ -258,5 +259,76 @@ class EliteAgentTest extends TestCase
         })->andReturn(Content::parse('Legacy answer.', Role::MODEL));
         $this->app->instance(GeminiTransport::class, $transport);
         $this->postJson('/api/support/chat', ['message' => 'Search'])->assertOk()->assertJson(['reply' => 'Legacy answer.']);
+    }
+
+    public function test_chat_is_public_and_does_not_forward_identity_or_replay_requests(): void
+    {
+        config(['elite_ai.agent_enabled' => true]);
+        $user = User::create([
+            'nom' => 'Private customer name', 'email' => 'private-customer@example.test',
+            'mot_de_passe' => bcrypt('password'), 'role' => 'client',
+        ]);
+        $token = $user->createToken('test')->plainTextToken;
+        $transport = Mockery::mock(GeminiTransport::class);
+        $transport->shouldReceive('generate')->times(4)->withArgs(function ($model, $system, $contents, $tools) use ($user, $token) {
+            $payload = json_encode([$system, $contents, $tools]);
+            foreach ([$user->nom, $user->email, $token, 'user_id', 'execution_id'] as $privateValue) {
+                $this->assertStringNotContainsString($privateValue, $payload);
+            }
+            $this->assertCount(6, $tools[0]->toArray()['functionDeclarations']);
+
+            return true;
+        })->andReturn(
+            Content::parse('Answer 1', Role::MODEL), Content::parse('Answer 2', Role::MODEL),
+            Content::parse('Answer 3', Role::MODEL), Content::parse('Answer 4', Role::MODEL),
+        );
+        $this->app->instance(GeminiTransport::class, $transport);
+        // Obsolete headers are ignored, even when repeated or not UUIDs.
+        $headers = ['X-Chat-Request-ID' => 'obsolete-client-value'];
+        $input = ['message' => 'Catalog question'];
+        $this->postJson('/api/support/chat', $input, $headers)->assertOk()
+            ->assertExactJson(['status' => 'success', 'reply' => 'Answer 1'])
+            ->assertHeaderMissing('X-Chat-Execution-ID');
+        $this->postJson('/api/support/chat', $input, $headers)->assertOk()
+            ->assertJsonPath('reply', 'Answer 2')->assertHeaderMissing('X-Chat-Execution-ID');
+        $this->actingAs($user, 'web');
+        $this->postJson('/api/support/chat', $input, ['Authorization' => 'Bearer '.$token])->assertOk()
+            ->assertJsonPath('reply', 'Answer 3')->assertHeaderMissing('X-Chat-Execution-ID');
+        $this->postJson('/api/support/chat', $input, ['Authorization' => 'Bearer invalid'])->assertOk()
+            ->assertJsonPath('reply', 'Answer 4')->assertHeaderMissing('X-Chat-Execution-ID');
+    }
+
+    public function test_public_chat_rejects_client_identity_and_history_metadata(): void
+    {
+        $agent = Mockery::mock(EliteAgentService::class);
+        $agent->shouldNotReceive('reply');
+        $this->app->instance(EliteAgentService::class, $agent);
+        foreach (['user_id' => 7, 'user' => ['id' => 7], 'context' => ['user_id' => 7], 'execution_id' => 'client-chosen'] as $key => $value) {
+            $this->postJson('/api/support/chat', ['message' => 'Question', $key => $value])->assertUnprocessable();
+        }
+        $this->postJson('/api/support/chat', ['message' => 'Question', 'user_id' => null])->assertUnprocessable();
+        $this->postJson('/api/support/chat', [
+            'message' => 'Question', 'history' => [['role' => 'user', 'content' => 'Hello', 'user_id' => 7]],
+        ])->assertUnprocessable();
+    }
+
+    public function test_removed_mutations_are_rejected_without_changing_store_state(): void
+    {
+        config(['elite_ai.agent_enabled' => true]);
+        $product = $this->product('Protected GPU', 99.99);
+        $transport = Mockery::mock(GeminiTransport::class);
+        foreach (['set_cart_quantity', 'remove_from_cart', 'add_favorite', 'remove_favorite'] as $name) {
+            $transport->shouldReceive('generate')->once()->ordered()
+                ->andReturn($this->toolCall(['product_id' => $product->id, 'quantity' => 2], $name));
+        }
+        $this->app->instance(GeminiTransport::class, $transport);
+        for ($i = 0; $i < 4; $i++) {
+            $this->postJson('/api/support/chat', ['message' => 'Change store data'])->assertOk()
+                ->assertJsonPath('status', 'error')->assertHeaderMissing('X-Chat-Execution-ID');
+        }
+        $this->assertDatabaseCount('cart_items', 0);
+        $this->assertDatabaseCount('favorites', 0);
+        $this->assertDatabaseCount('commandes', 0);
+        $this->assertSame(3, $product->fresh()->stock);
     }
 }
