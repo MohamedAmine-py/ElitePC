@@ -40,7 +40,14 @@ class ToolRegistry
     public function definitions(): array
     {
         return [new Tool(functionDeclarations: array_map(
-            fn (AgentTool $tool) => new FunctionDeclaration($tool->name(), $tool->description(), $tool->schema()),
+            function (AgentTool $tool) {
+                $schema = $tool->schema();
+                if (str_contains(json_encode($schema->toArray(), JSON_THROW_ON_ERROR), '"user_id"')) {
+                    throw new InvalidArgumentException('Tool schemas cannot declare user identity.');
+                }
+
+                return new FunctionDeclaration($tool->name(), $tool->description(), $schema);
+            },
             array_values($this->tools),
         ))];
     }

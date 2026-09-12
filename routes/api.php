@@ -8,6 +8,7 @@ use App\Http\Controllers\API\CommandeController;
 use App\Http\Controllers\API\FavoriteController;
 use App\Http\Controllers\API\ProduitController;
 use App\Http\Controllers\API\SupportChatController;
+use App\Http\Middleware\OptionalChatAuthentication;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,7 +33,7 @@ Route::get('/categories', [CategorieController::class, 'index']);
 
 // Support Chat agent route — rate-limited to 30 requests/minute/IP
 Route::post('/support/chat', [SupportChatController::class, 'handleChat'])
-    ->middleware('throttle:ai-chat');
+    ->middleware([OptionalChatAuthentication::class, 'throttle:ai-chat']);
 
 // ── AUTHENTICATED ROUTES ───────────────────────────────────────
 // Must send Authorization: Bearer {token} header

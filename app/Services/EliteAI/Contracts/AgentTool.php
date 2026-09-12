@@ -12,6 +12,6 @@ interface AgentTool
 
     public function schema(): Schema;
 
-    /** Validate untrusted arguments before any data access. */
+    /** Public read-only execution. Future private tools extend AuthenticatedAgentTool. */
     public function execute(array $arguments): array;
 }

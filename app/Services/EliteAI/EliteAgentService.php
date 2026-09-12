@@ -6,8 +6,9 @@ use Gemini\Data\Content;
 use Gemini\Data\FunctionResponse;
 use Gemini\Data\Part;
 use Gemini\Enums\Role;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -19,15 +20,19 @@ class EliteAgentService
 
     public const MAX_REQUESTS = 10;
 
-    public function __construct(private ToolRegistry $registry, private GeminiTransport $transport) {}
+    public function __construct(private ToolRegistry $registry, private GeminiTransport $transport, private ToolExecutor $executor = new ToolExecutor) {}
 
-    public function reply(string $message, array $history = []): string
+    public function reply(string $message, array $history = [], ?AgentContext $context = null): string
     {
         $initial = ChatHistory::contents($message, $history);
-        $trace = (string) Str::uuid();
+        $context ??= new AgentContext;
+        $trace = $context->executionId;
         $toolCalls = 0;
         $requests = 0;
         foreach (GeminiTransport::MODELS as $model) {
+            if ($model !== GeminiTransport::MODELS[0]) {
+                $context->mutations->onFallback();
+            }
             // Signatures belong to a model: never replay them to a different fallback model.
             $contents = $initial;
             while ($requests < self::MAX_REQUESTS) {
@@ -65,7 +70,7 @@ class EliteAgentService
                         throw new RuntimeException('Unavailable assistant capability.');
                     }
                     try {
-                        $result = $tool->execute($call->args);
+                        $result = $this->executor->execute($tool, $call->args, $context, $call->id);
                         $products = $result['products'] ?? $result['known_facts'] ?? (isset($result['product']) ? [$result['product']] : []);
                         Log::info('Elite AI tool executed.', [
                             'trace_id' => $trace, 'tool' => $tool->name(),
@@ -76,6 +81,9 @@ class EliteAgentService
                             'returned_count' => $result['returned_count'] ?? count($products),
                             'result_status' => $result['status'] ?? 'ok',
                         ]);
+                    } catch (AuthenticationException|AuthorizationException) {
+                        $result = ['error' => 'This capability requires authorization for the current account.'];
+                        Log::notice('Elite AI private tool access rejected.', ['trace_id' => $trace, 'tool' => $tool->name()]);
                     } catch (ValidationException) {
                         $result = ['error' => 'Invalid arguments. Use only the declared parameters with their required types, ranges and distinct product IDs.'];
                         Log::notice('Elite AI tool arguments rejected.', ['trace_id' => $trace, 'tool' => $tool->name()]);

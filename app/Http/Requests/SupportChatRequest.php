@@ -31,7 +31,7 @@ class SupportChatRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('message')) {
+        if (is_string($this->input('message'))) {
             $this->merge([
                 'message' => strip_tags($this->input('message')),
             ]);
@@ -47,6 +47,11 @@ class SupportChatRequest extends FormRequest
     {
         return [
             'message' => 'required|string|max:2000',
+            'user_id' => 'missing',
+            'user' => 'missing',
+            'context' => 'missing',
+            'execution_id' => 'missing',
+            'history.*' => 'array:role,content',
             'history' => 'nullable|array|max:'.self::HISTORY_LIMIT,
             'history.*.role' => 'required|string|in:user,model,assistant',
             'history.*.content' => 'required|string|max:5000',

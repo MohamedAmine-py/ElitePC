@@ -16,15 +16,15 @@ use Gemini\Data\Content;
 use Gemini\Data\FunctionCall;
 use Gemini\Data\Part;
 use Gemini\Enums\Role;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Mockery;
+use Tests\Concerns\UsesChatTestDatabase;
 use Tests\TestCase;
 
 class ProductIntelligenceToolsTest extends TestCase
 {
-    use RefreshDatabase;
+    use UsesChatTestDatabase;
 
     private function product(string $name, array $attributes = []): Produit
     {
