@@ -149,6 +149,21 @@ class EliteAgentTest extends TestCase
         $this->assertSame(20, substr_count($reply, '| Catalog item '));
     }
 
+    public function test_empty_literal_search_guides_retry_without_changing_filters_or_matching(): void
+    {
+        $product = $this->product('Corsair Vengeance 32GB (2x16GB) DDR5-6000', 114.99);
+        $tool = app(SearchProductsTool::class);
+        $miss = $tool->execute(['search' => 'Corsair Vengeance 32GB DDR5-6000']);
+        $this->assertSame([], $miss['products']);
+        $this->assertStringContainsString('retry a shorter distinctive name fragment', $miss['search_hint']);
+        $this->assertStringContainsString('Keep all customer-requested filters', $miss['search_hint']);
+        $hit = $tool->execute(['search' => 'Corsair Vengeance']);
+        $this->assertSame([$product->id], array_column($hit['products'], 'id'));
+        $this->assertArrayNotHasKey('search_hint', $hit);
+        $this->assertArrayNotHasKey('search_hint', $tool->execute(['max_price' => 1]));
+        $this->assertSame([], $tool->execute(['search' => 'Corsair Vengeance', 'max_price' => 1])['products']);
+    }
+
     public function test_malformed_arguments_are_rejected_before_querying(): void
     {
         foreach ([['all' => 'true'], ['all' => 1], ['all' => null], ['limit' => 11], ['limit' => 0], ['limit' => '2'], ['max_price' => -1], ['max_price' => '100'], ['max_price' => INF], ['search' => []], ['in_stock' => 'true'], ['table' => 'users'], ['min_price' => 10, 'max_price' => 5], ['category' => str_repeat('x', 101)]] as $args) {
