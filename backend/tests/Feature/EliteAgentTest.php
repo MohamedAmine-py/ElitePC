@@ -71,9 +71,87 @@ class EliteAgentTest extends TestCase
         $this->assertSame([], $tool->execute(['search' => "' OR 1=1 --"])['products']);
     }
 
+    public function test_exhaustive_search_reads_the_whole_live_catalog_after_it_grows(): void
+    {
+        for ($i = 1; $i <= 16; $i++) {
+            $this->product('Catalog item '.$i, $i * 10, $i === 16 ? 0 : 3);
+        }
+        $tool = app(SearchProductsTool::class);
+        $result = $tool->execute(['all' => true]);
+        $this->assertSame(Produit::orderBy('prix')->orderBy('id')->pluck('id')->all(), array_column($result['products'], 'id'));
+        $this->assertSame(16, $result['returned_count']);
+        $this->assertFalse($result['has_more']);
+        $this->assertSame(0, $result['products'][15]['stock']);
+
+        for ($i = 17; $i <= 20; $i++) {
+            $this->product('Catalog item '.$i, $i * 10);
+        }
+        $grown = $tool->execute(['all' => true]);
+        $this->assertSame(Produit::count(), $grown['returned_count']);
+        $this->assertSame(20, $grown['returned_count']);
+        $this->assertSame(Produit::orderBy('prix')->orderBy('id')->pluck('id')->all(), array_column($grown['products'], 'id'));
+        $this->assertFalse($grown['has_more']);
+        $this->assertCount(10, $tool->execute([])['products']);
+        $this->assertCount(10, $tool->execute(['all' => false])['products']);
+        $this->assertTrue($tool->execute([])['has_more']);
+    }
+
+    public function test_exhaustive_search_keeps_explicit_filters_and_ignores_the_row_limit(): void
+    {
+        for ($i = 1; $i <= 13; $i++) {
+            $this->product('GPU '.$i, $i * 10);
+        }
+        $this->product('CPU', 50);
+        $this->product('GPU sold out', 50, 0);
+        $tool = app(SearchProductsTool::class);
+        $args = ['all' => true, 'search' => 'GPU', 'category' => 'components', 'min_price' => 20, 'in_stock' => true, 'limit' => 2];
+        $result = $tool->execute($args);
+        $this->assertCount(12, $result['products']);
+        $this->assertSame('20.00', $result['products'][0]['price']);
+        $this->assertFalse($result['has_more']);
+        $args['all'] = false;
+        $this->assertCount(2, $tool->execute($args)['products']);
+        $this->assertSame([], $tool->execute(['all' => true, 'search' => 'not present'])['products']);
+        $this->assertFalse($tool->execute(['all' => true, 'search' => 'not present'])['has_more']);
+    }
+
+    public function test_agent_can_recover_a_partial_search_for_an_explicit_all_products_table(): void
+    {
+        for ($i = 1; $i <= 20; $i++) {
+            $this->product('Catalog item '.$i, $i * 10);
+        }
+        $transport = Mockery::mock(GeminiTransport::class);
+        $transport->shouldReceive('generate')->once()->ordered()->withArgs(function ($model, $system, $contents, $tools) {
+            $this->assertStringContainsString('call search_products with all=true', $system);
+            $this->assertStringContainsString('Product | Category | Price | Stock', $system);
+            $schema = $tools[0]->toArray()['functionDeclarations'][0]['parameters'];
+            $this->assertSame('BOOLEAN', $schema['properties']['all']['type']);
+
+            return true;
+        })->andReturn($this->toolCall());
+        $transport->shouldReceive('generate')->once()->ordered()->withArgs(function ($model, $system, $contents) {
+            $result = end($contents)->parts[0]->functionResponse->response;
+            $this->assertSame(10, $result['returned_count']);
+            $this->assertTrue($result['has_more']);
+
+            return true;
+        })->andReturn($this->toolCall(['all' => true]));
+        $transport->shouldReceive('generate')->once()->ordered()->andReturnUsing(function ($model, $system, $contents) {
+            $result = end($contents)->parts[0]->functionResponse->response;
+            $this->assertSame(Produit::count(), $result['returned_count']);
+            $this->assertFalse($result['has_more']);
+            $rows = array_map(fn ($p) => "| {$p['name']} | {$p['category']} | \${$p['price']} | {$p['stock']} |", $result['products']);
+
+            return Content::parse("| Product | Category | Price | Stock |\n| --- | --- | --- | --- |\n".implode("\n", $rows), Role::MODEL);
+        });
+        $reply = (new EliteAgentService(app(ToolRegistry::class), $transport, app(KnowledgeRetriever::class)))
+            ->reply('give me a table for all products');
+        $this->assertSame(20, substr_count($reply, '| Catalog item '));
+    }
+
     public function test_malformed_arguments_are_rejected_before_querying(): void
     {
-        foreach ([['limit' => 11], ['limit' => 0], ['limit' => '2'], ['max_price' => -1], ['max_price' => '100'], ['max_price' => INF], ['search' => []], ['in_stock' => 'true'], ['table' => 'users'], ['min_price' => 10, 'max_price' => 5], ['category' => str_repeat('x', 101)]] as $args) {
+        foreach ([['all' => 'true'], ['all' => 1], ['all' => null], ['limit' => 11], ['limit' => 0], ['limit' => '2'], ['max_price' => -1], ['max_price' => '100'], ['max_price' => INF], ['search' => []], ['in_stock' => 'true'], ['table' => 'users'], ['min_price' => 10, 'max_price' => 5], ['category' => str_repeat('x', 101)]] as $args) {
             try {
                 app(SearchProductsTool::class)->execute($args);
                 $this->fail('Invalid arguments were accepted.');
