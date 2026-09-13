@@ -96,6 +96,8 @@ class KnowledgeAgentIntegrationTest extends TestCase
         $transport->shouldReceive('generate')->once()->withArgs(function ($model, $system) {
             $this->assertStringNotContainsString('[ELITEPC KNOWLEDGE]', $system);
             $this->assertStringContainsString('Never invent ElitePC policies.', $system);
+            $this->assertStringContainsString('A missing store policy is a knowledge gap', $system);
+            $this->assertStringContainsString('omit internal product IDs', $system);
             $this->assertStringContainsString('available ElitePC information does not define that policy', $system);
             $this->assertStringContainsString('Absence of a policy is not evidence that the store does not offer it.', $system);
 

@@ -99,6 +99,11 @@ class SearchProductsTool implements AgentTool
             'specifications' => $product->only(['brand', 'processor', 'graphics_card', 'ram_details', 'storage_details', 'is_custom_build']),
         ])->values()->all();
 
-        return ['currency' => 'USD', 'products' => $products, 'returned_count' => count($products), 'has_more' => ! $all && $rows->count() > $limit];
+        $result = ['currency' => 'USD', 'products' => $products, 'returned_count' => count($products), 'has_more' => ! $all && $rows->count() > $limit];
+        if ($products === [] && trim($filters['search'] ?? '') !== '') {
+            $result['search_hint'] = 'No matches for this literal substring. For a named product, retry a shorter distinctive name fragment before declaring it unavailable. Keep all customer-requested filters; do not guess product IDs.';
+        }
+
+        return $result;
     }
 }
