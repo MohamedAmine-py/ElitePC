@@ -21,7 +21,7 @@ class SearchProductsTool implements AgentTool
 
     public function description(): string
     {
-        return 'Read current ElitePC products, exact USD prices, stock and known specs. ALL filters are optional; no keyword or category is required. Use in_stock=true for broad availability questions, or no arguments to browse. Filters combine with AND. Returns at most 10 products, cheapest first; has_more indicates a partial result. No mutations.';
+        return 'Read current ElitePC products, exact USD prices, stock and known specs. ALL filters are optional; no keyword or category is required. Use in_stock=true for broad availability questions, or no arguments to browse. Filters combine with AND. Normally returns at most 10 products, cheapest first; has_more indicates a partial result. For explicit all/every/entire catalog requests, set all=true to return every matching live product without a row limit. Omit filters the customer did not request. No mutations.';
     }
 
     public function schema(): Schema
@@ -32,13 +32,14 @@ class SearchProductsTool implements AgentTool
             'min_price' => new Schema(type: DataType::NUMBER, description: 'Minimum inclusive price in USD, zero or greater.'),
             'max_price' => new Schema(type: DataType::NUMBER, description: 'Maximum inclusive price in USD, zero or greater.'),
             'in_stock' => new Schema(type: DataType::BOOLEAN, description: 'True: stock > 0; false: stock = 0; omit for either.'),
-            'limit' => new Schema(type: DataType::INTEGER, description: 'Number of products, 1 to 10; default 10.'),
+            'limit' => new Schema(type: DataType::INTEGER, description: 'Number of products, 1 to 10; default 10. Ignored when all=true.'),
+            'all' => new Schema(type: DataType::BOOLEAN, description: 'Default false. Set true ONLY when the customer explicitly requests all/every matching product or the entire catalog; ignores limit while retaining requested filters.'),
         ]);
     }
 
     public function execute(array $arguments): array
     {
-        $allowed = ['search', 'category', 'min_price', 'max_price', 'in_stock', 'limit'];
+        $allowed = ['search', 'category', 'min_price', 'max_price', 'in_stock', 'limit', 'all'];
         if (array_diff(array_keys($arguments), $allowed)) {
             throw ValidationException::withMessages(['arguments' => 'Unknown search filter.']);
         }
@@ -47,7 +48,7 @@ class SearchProductsTool implements AgentTool
             $valid = match ($key) {
                 'search', 'category' => is_string($value),
                 'min_price', 'max_price' => (is_int($value) || is_float($value)) && is_finite((float) $value),
-                'in_stock' => is_bool($value),
+                'in_stock', 'all' => is_bool($value),
                 'limit' => is_int($value),
             };
             if (! $valid) {
@@ -58,7 +59,7 @@ class SearchProductsTool implements AgentTool
             'search' => 'sometimes|string|max:100', 'category' => 'sometimes|string|max:100',
             'min_price' => 'sometimes|numeric|min:0|max:99999999.99',
             'max_price' => 'sometimes|numeric|min:0|max:99999999.99',
-            'in_stock' => 'sometimes|boolean', 'limit' => 'sometimes|integer|min:1|max:'.self::MAX_RESULTS,
+            'in_stock' => 'sometimes|boolean', 'all' => 'sometimes|boolean', 'limit' => 'sometimes|integer|min:1|max:'.self::MAX_RESULTS,
         ])->validate();
         if (isset($filters['min_price'], $filters['max_price']) && $filters['min_price'] > $filters['max_price']) {
             throw ValidationException::withMessages(['max_price' => 'Maximum must be at least minimum.']);
@@ -87,9 +88,10 @@ class SearchProductsTool implements AgentTool
         if (array_key_exists('in_stock', $filters)) {
             $query->where('stock', $filters['in_stock'] ? '>' : '=', 0);
         }
+        $all = $filters['all'] ?? false;
         $limit = $filters['limit'] ?? self::MAX_RESULTS;
-        $rows = $query->orderBy('prix')->orderBy('id')->limit($limit + 1)->get();
-        $products = $rows->take($limit)->map(fn (Produit $product) => [
+        $rows = $query->orderBy('prix')->orderBy('id')->when(! $all, fn ($query) => $query->limit($limit + 1))->get();
+        $products = ($all ? $rows : $rows->take($limit))->map(fn (Produit $product) => [
             'id' => $product->id, 'name' => $product->nom,
             'price' => number_format((float) $product->prix, 2, '.', ''), 'stock' => $product->stock,
             'category' => $product->categorie?->nom,
@@ -97,6 +99,6 @@ class SearchProductsTool implements AgentTool
             'specifications' => $product->only(['brand', 'processor', 'graphics_card', 'ram_details', 'storage_details', 'is_custom_build']),
         ])->values()->all();
 
-        return ['currency' => 'USD', 'products' => $products, 'returned_count' => count($products), 'has_more' => $rows->count() > $limit];
+        return ['currency' => 'USD', 'products' => $products, 'returned_count' => count($products), 'has_more' => ! $all && $rows->count() > $limit];
     }
 }
