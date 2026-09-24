@@ -487,6 +487,16 @@ Current operational boundaries:
 - The Contact form is currently a non-submitting presentation placeholder.
 - The repository does not include production hosting configuration or browser end-to-end tests.
 
+## License
+
+Copyright © 2026 Mohamed Amine Benbouselham.
+
+ElitePC is available for personal, educational, research, and other
+non-commercial use. Commercial use requires prior written permission from
+the copyright holder.
+
+See [LICENSE](LICENSE) for the full terms.
+
 ## Author
 
 Mohamed Amine
